@@ -1,0 +1,11 @@
+scp C:\Users\57878\Desktop\Aliyun\change\admin.html root@47.103.204.46:/opt/app/iCampus_rec/templates/admin.html
+
+scp C:\Users\57878\Desktop\Aliyun\change\admin.py root@47.103.204.46:/opt/app/iCampus_rec/admin.py
+
+重启服务
+systemctl restart iCampus_rec
+sleep 2
+systemctl status iCampus_rec   # 确保 active (running)
+
+cd /opt//app/iCampus_rec/
+source /opt/app/iCampus_rec/venv/bin/activate

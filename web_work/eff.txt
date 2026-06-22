@@ -1,0 +1,179 @@
+重启推荐服务（已训练新模型，需加载）：
+
+systemctl restart iCampus_rec
+systemctl status iCampus_rec   # 查看状态，确保 active
+---------------------------------------------------------------------------------
+好的，以下是从 MySQL 数据库成功导出并清洗数据，使其能被推荐系统正确使用的**完整、可复现的步骤**。这些步骤基于你之前多次调试后最终成功的方法，涵盖了数据导出、格式标准化、外键过滤、重复表头删除、用户 ID 统一等关键环节。
+
+---
+
+## 一、导出帖子表 (`post`)
+
+```bash
+mysql -u root -p campus_db -B -e "
+SELECT id, title, content, type, DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') AS publish_time
+FROM post
+" | sed 's/\t/","/g; s/^/"/; s/$/"/' > /tmp/posts_quoted.csv
+```
+
+添加表头（注意列名必须与代码一致：`post_id,title,content,tags,publish_time`）：
+
+```bash
+echo "\"post_id\",\"title\",\"content\",\"tags\",\"publish_time\"" > /opt/app/iCampus_rec/data/posts_train.csv
+cat /tmp/posts_quoted.csv >> /opt/app/iCampus_rec/data/posts_train.csv
+```
+
+---
+
+## 二、导出交互表 (`like_dislike`)
+
+```bash
+mysql -u root -p campus_db -B -e "
+SELECT student_id, post_id, type, 1 AS position, NOW() AS timestamp, IF(type='like',1,0.5) AS weight
+FROM like_dislike
+" | sed 's/\t/","/g; s/^/"/; s/$/"/' > /tmp/interactions_quoted.csv
+```
+
+添加表头：
+
+```bash
+echo "\"user_id\",\"post_id\",\"action\",\"position\",\"timestamp\",\"weight\"" > /opt/app/iCampus_rec/data/interactions.csv
+cat /tmp/interactions_quoted.csv >> /opt/app/iCampus_rec/data/interactions.csv
+```
+
+---
+
+## 三、导出评论表 (`comment`)
+
+```bash
+mysql -u root -p campus_db -B -e "
+SELECT id, student_id, post_id, content, DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') AS timestamp
+FROM comment
+" | sed 's/\t/","/g; s/^/"/; s/$/"/' > /tmp/comments_quoted.csv
+```
+
+添加表头：
+
+```bash
+echo "\"comment_id\",\"user_id\",\"post_id\",\"content\",\"timestamp\"" > /opt/app/iCampus_rec/data/comments.csv
+cat /tmp/comments_quoted.csv >> /opt/app/iCampus_rec/data/comments.csv
+```
+
+---
+
+## 四、导出评论点赞表 (`comment_like_dislike`)
+
+只导出 `type = 'like'` 的记录（如果有点踩数据也可一并导出，但模型只用点赞）：
+
+```bash
+mysql -u root -p campus_db -B -e "
+SELECT student_id, comment_id, DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') AS timestamp
+FROM comment_like_dislike
+WHERE type = 'like'
+" | sed 's/\t/","/g; s/^/"/; s/$/"/' > /tmp/likes_quoted.csv
+```
+
+添加表头：
+
+```bash
+echo "\"user_id\",\"comment_id\",\"timestamp\"" > /opt/app/iCampus_rec/data/comment_likes.csv
+cat /tmp/likes_quoted.csv >> /opt/app/iCampus_rec/data/comment_likes.csv
+```
+
+---
+
+## 五、删除重复的表头行
+
+有时导出的 CSV 会包含两行列名（第一行是表头，第二行又是列名），需要删除第二行：
+
+```bash
+sed -i '2d' /opt/app/iCampus_rec/data/interactions.csv
+sed -i '2d' /opt/app/iCampus_rec/data/comments.csv
+sed -i '2d' /opt/app/iCampus_rec/data/comment_likes.csv
+```
+
+---
+
+## 六、统一用户 ID 格式（关键步骤）
+
+如果评论表中的 `student_id` 是纯数字（如 `1`），而交互表中的 `user_id` 是带前缀 `user_` 的格式（如 `user_1`），需要统一为 `user_` 前缀，否则构建图时会 `KeyError`。
+
+```bash
+# 转换 comments.csv 中的 user_id
+awk -F',' 'BEGIN{OFS=","} NR==1{print; next} {$2="user_"$2; print}' /opt/app/iCampus_rec/data/comments.csv > /tmp/comments_fixed.csv
+mv /tmp/comments_fixed.csv /opt/app/iCampus_rec/data/comments.csv
+
+# 转换 comment_likes.csv 中的 user_id
+awk -F',' 'BEGIN{OFS=","} NR==1{print; next} {$1="user_"$1; print}' /opt/app/iCampus_rec/data/comment_likes.csv > /tmp/likes_fixed.csv
+mv /tmp/likes_fixed.csv /opt/app/iCampus_rec/data/comment_likes.csv
+```
+
+**注意**：如果交互文件中的 `user_id` 本来就是数字（如 `1`），则不需要添加 `user_` 前缀。请根据实际情况决定是否执行此步骤。
+
+---
+
+## 七、过滤无效的外键（防止 `KeyError`）
+
+确保所有 `user_id`、`post_id`、`comment_id` 都存在于对应的主表中。可以用 `INNER JOIN` 导出，或者用以下命令过滤已有文件。
+
+### 提取有效 ID 集合
+
+```bash
+# 有效用户（从交互文件）
+awk -F',' 'NR>1 {print $1}' /opt/app/iCampus_rec/data/interactions.csv | sort -u > /tmp/valid_users.txt
+
+# 有效帖子
+awk -F',' 'NR>1 {print $1}' /opt/app/iCampus_rec/data/posts_train.csv | sort -u > /tmp/valid_posts.txt
+
+# 有效评论（如果评论表已有）
+awk -F',' 'NR>1 {print $1}' /opt/app/iCampus_rec/data/comments.csv | sort -u > /tmp/valid_comments.txt
+```
+
+### 过滤交互文件（只保留有效用户和帖子）
+
+```bash
+awk -F',' 'NR==1{print; next} {if (system("grep -q \"^" $1 "$\" /tmp/valid_users.txt") == 0 && system("grep -q \"^" $2 "$\" /tmp/valid_posts.txt") == 0) print}' /opt/app/iCampus_rec/data/interactions.csv > /tmp/inter_filtered.csv
+mv /tmp/inter_filtered.csv /opt/app/iCampus_rec/data/interactions.csv
+```
+
+同理，对 `comments.csv` 和 `comment_likes.csv` 也做类似过滤（根据列位置调整）。
+
+---
+
+## 八、验证文件格式
+
+```bash
+head -3 /opt/app/iCampus_rec/data/posts_train.csv
+head -3 /opt/app/iCampus_rec/data/interactions.csv
+head -3 /opt/app/iCampus_rec/data/comments.csv
+head -3 /opt/app/iCampus_rec/data/comment_likes.csv
+```
+
+每行应被双引号包裹，字段数正确，无多余表头，时间格式为 `YYYY-MM-DD HH:MM:SS`。
+
+---
+
+## 九、重新构建图和训练
+
+```bash
+cd /opt/app/iCampus_rec
+source venv/bin/activate
+python generate_embeddings.py      # 生成语义向量
+python -c "from data_utils import build_graph; build_graph()"   # 构建图
+python train.py                    # 训练模型
+```
+
+---
+
+## 关键原理总结
+
+| 问题 | 解决方法 |
+|------|----------|
+| CSV 字段内逗号导致解析错误 | 使用 `sed` 给所有字段加双引号 |
+| 重复表头行 | `sed -i '2d'` 删除第二行 |
+| 用户 ID 格式不一致 | 用 `awk` 统一添加 `user_` 前缀 |
+| 外键缺失导致 `KeyError` | 用 `grep` 过滤无效 ID，或 `INNER JOIN` 导出 |
+| 时间戳解析失败 | 确保时间列格式为 `YYYY-MM-DD HH:MM:SS` |
+| 表头列名与代码不符 | 导出时手动指定列名（如 `post_id`, `user_id`） |
+
+按照以上步骤，即可得到一份干净、规范的数据集，保证推荐系统图构建和训练顺利运行。
