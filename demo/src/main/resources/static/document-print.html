@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>文档图片打印 - iCampus</title>
+  <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+  <style>
+    /* ========== 原有所有样式（完整保留） ========== */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { background-color: #f5f7fb; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1f2937; }
+    .nav-bar { position: sticky; top: 0; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #f0f0f0; z-index: 10; }
+    .nav-back { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #2c3e50; cursor: pointer; border-radius: 50%; background: #f0f2f5; }
+    .nav-title { font-size: 18px; font-weight: 600; color: #1e293b; }
+    .nav-right { width: 32px; }
+    .card { background: white; margin: 16px; border-radius: 24px; padding: 18px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid #edf2f7; }
+    .section-title { font-size: 16px; font-weight: 600; color: #0f172a; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .section-title i { color: #3b82f6; }
+    .file-list { margin-bottom: 16px; }
+    .file-item { background: #f9fafc; border-radius: 20px; padding: 12px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #eef2f6; cursor: pointer; transition: all 0.2s; }
+    .file-item.selected { border: 2px solid #2c6e9e; background: #f0f9ff; }
+    .file-info { flex: 1; }
+    .file-name { font-weight: 500; font-size: 14px; margin-bottom: 4px; word-break: break-all; }
+    .file-meta { font-size: 12px; color: #6c86a3; }
+    .delete-file { color: #f97373; background: #fff0f0; width: 32px; height: 32px; border-radius: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .empty-files { text-align: center; padding: 30px; color: #94a3b8; }
+    .setting-group { margin-bottom: 20px; }
+    .setting-label { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #334155; }
+    .option-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .option-chip { background: #f1f5f9; padding: 8px 16px; border-radius: 40px; font-size: 13px; cursor: pointer; transition: 0.2s; }
+    .option-chip.active { background: #2c6e9e; color: white; }
+    .range-input { display: flex; align-items: center; gap: 10px; background: #f1f5f9; padding: 8px 12px; border-radius: 40px; width: fit-content; }
+    .range-input input { width: 60px; padding: 6px; border: none; background: white; border-radius: 30px; text-align: center; font-size: 14px; }
+    .quantity-control { display: flex; align-items: center; gap: 12px; background: #f1f5f9; padding: 4px 12px; border-radius: 40px; width: fit-content; }
+    .quantity-btn { width: 32px; height: 32px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; font-weight: bold; color: #2c6e9e; }
+    .price-preview { background: #fef7e0; padding: 12px; border-radius: 20px; margin-top: 12px; display: flex; justify-content: space-between; font-size: 14px; }
+    .payment-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #eff3f8; padding: 12px 20px 22px; display: flex; align-items: center; justify-content: space-between; z-index: 20; }
+    .total-price { font-size: 24px; font-weight: 700; color: #e67e22; }
+    .confirm-btn { background: #2c6e9e; padding: 12px 28px; border-radius: 40px; color: white; font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .toast-message { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 20px; border-radius: 40px; font-size: 13px; z-index: 999; pointer-events: none; }
+    .hidden-input { display: none; }
+
+    /* ========== 新增全屏居中样式 ========== */
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding-bottom: 0;
+    }
+    .app-container {
+      max-width: 540px;
+      width: 100%;
+      margin: 0 auto;
+      background: #f5f7fb;
+      position: relative;
+      min-height: 100vh;
+    }
+    /* 为底部固定栏预留空间 */
+    .card:last-of-type {
+      margin-bottom: 90px;
+    }
+    .payment-bar {
+      max-width: 540px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+    }
+    .tabbar {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <!-- 原有全部内容（从 nav-bar 到最后一个 card） -->
+  <div class="nav-bar">
+    <div class="nav-back" id="backBtn"><i class="fas fa-chevron-left"></i></div>
+    <div class="nav-title">文档图片打印</div>
+    <div class="nav-right"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title"><i class="fas fa-cloud-upload-alt"></i> 上传文件</div>
+    <button class="option-chip" id="uploadBtn" style="background:#2c6e9e; color:white; width:100%; text-align:center;">+ 添加文件</button>
+    <input type="file" id="fileInput" class="hidden-input" multiple accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.jpg,.jpeg,.png">
+    <div id="fileListContainer" class="file-list" style="margin-top: 16px;">
+      <div class="empty-files" id="emptyHint">暂无文件，点击上方添加</div>
+      <div id="dynamicFiles"></div>
+    </div>
+  </div>
+
+  <div class="card" id="settingsPanel" style="display: none;">
+    <div class="section-title"><i class="fas fa-sliders-h"></i> 打印设置</div>
+    <div id="settingsContent"></div>
+    <div class="price-preview" id="filePricePreview">
+      <span>预估金额</span>
+      <span><strong id="filePrice">¥0.00</strong></span>
+    </div>
+  </div>
+
+  <div class="payment-bar">
+    <div>
+      <div style="font-size: 13px; color: #5b6e8c;">合计金额</div>
+      <div class="total-price">¥ <span id="totalPrice">0.00</span></div>
+    </div>
+    <div class="confirm-btn" id="confirmPayBtn">
+      <i class="fas fa-check-circle"></i> 确认支付
+    </div>
+  </div>
+</div>
+<script src="js/common.js"></script>
+<script>
+  // ========== 原文档打印的所有 JavaScript 代码（完整保留） ==========
+  // 定价系数
+  const colorPrice = { bw: 0.2, color: 0.5 };
+  const sizeMultiplier = { 'A4': 1.0, 'A3': 1.5, 'A2': 1.8, 'A1': 2.0, 'A0': 2.5, '精简': 0.9 };
+  const paperTypeMultiplier = { '普通纸': 1.0 };
+  let files = [];
+  let selectedFileId = null;
+  let nextId = 1;
+  const fileInput = document.getElementById('fileInput');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const dynamicFilesDiv = document.getElementById('dynamicFiles');
+  const emptyHint = document.getElementById('emptyHint');
+  const settingsPanel = document.getElementById('settingsPanel');
+  const settingsContent = document.getElementById('settingsContent');
+  const filePriceSpan = document.getElementById('filePrice');
+  const totalPriceSpan = document.getElementById('totalPrice');
+  const backBtn = document.getElementById('backBtn');
+  const confirmBtn = document.getElementById('confirmPayBtn');
+
+  function showToast(msg) {
+    let toast = document.createElement('div');
+    toast.className = 'toast-message';
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  }
+  function getDefaultSettings() {
+    return { color: 'bw', size: 'A4', paperType: '普通纸', layout: 'auto', pageRangeMode: 'all', startPage: 1, endPage: 1, duplex: '单面', nUp: '不缩印', copies: 1 };
+  }
+  function calculateFilePrice(file) {
+    let totalPages = file.totalPages;
+    let printPages = totalPages;
+    if (file.settings.pageRangeMode === 'custom') {
+      let start = parseInt(file.settings.startPage) || 1;
+      let end = parseInt(file.settings.endPage) || totalPages;
+      start = Math.max(1, Math.min(start, totalPages));
+      end = Math.max(start, Math.min(end, totalPages));
+      printPages = end - start + 1;
+      if (printPages < 1) printPages = 1;
+    }
+    let pricePerPage = colorPrice[file.settings.color];
+    let sizeFactor = sizeMultiplier[file.settings.size] || 1.0;
+    let paperFactor = paperTypeMultiplier[file.settings.paperType] || 1.0;
+    let singlePrice = printPages * pricePerPage * sizeFactor * paperFactor;
+    let total = singlePrice * file.settings.copies;
+    return parseFloat(total.toFixed(2));
+  }
+  function updateAllPrices() {
+    let total = 0;
+    files.forEach(f => { f.price = calculateFilePrice(f); total += f.price; });
+    totalPriceSpan.innerText = total.toFixed(2);
+    if (selectedFileId !== null) {
+      let selected = files.find(f => f.id === selectedFileId);
+      if (selected) filePriceSpan.innerText = `¥${selected.price.toFixed(2)}`;
+    }
+    renderFileList();
+  }
+  function renderFileList() {
+    if (files.length === 0) {
+      emptyHint.style.display = 'block';
+      dynamicFilesDiv.innerHTML = '';
+      settingsPanel.style.display = 'none';
+      selectedFileId = null;
+      return;
+    }
+    emptyHint.style.display = 'none';
+    let html = '';
+    files.forEach(file => {
+      const isSelected = (selectedFileId === file.id);
+      html += `<div class="file-item ${isSelected ? 'selected' : ''}" data-id="${file.id}">
+                        <div class="file-info">
+                            <div class="file-name">${escapeHtml(file.name)}</div>
+                            <div class="file-meta">共 ${file.totalPages} 页 · ¥${file.price.toFixed(2)}</div>
+                        </div>
+                        <div class="delete-file" data-id="${file.id}"><i class="fas fa-trash-alt"></i></div>
+                    </div>`;
+    });
+    dynamicFilesDiv.innerHTML = html;
+    document.querySelectorAll('.file-item').forEach(el => {
+      el.addEventListener('click', (e) => { if (!e.target.closest('.delete-file')) selectFile(parseInt(el.getAttribute('data-id'))); });
+    });
+    document.querySelectorAll('.delete-file').forEach(btn => {
+      btn.addEventListener('click', (e) => { e.stopPropagation(); deleteFile(parseInt(btn.getAttribute('data-id'))); });
+    });
+    if (selectedFileId && files.find(f => f.id === selectedFileId)) renderSettingsPanel(selectedFileId);
+    else if (files.length > 0) selectFile(files[0].id);
+    else settingsPanel.style.display = 'none';
+  }
+  function selectFile(id) { selectedFileId = id; renderFileList(); renderSettingsPanel(id); }
+  function renderSettingsPanel(fileId) {
+    const file = files.find(f => f.id === fileId);
+    if (!file) return;
+    settingsPanel.style.display = 'block';
+    const s = file.settings;
+    let html = `<div class="setting-group"><div class="setting-label">打印颜色</div><div class="option-row"><div class="option-chip ${s.color === 'bw' ? 'active' : ''}" data-setting="color" data-value="bw">黑白</div><div class="option-chip ${s.color === 'color' ? 'active' : ''}" data-setting="color" data-value="color">彩色</div></div></div>
+                    <div class="setting-group"><div class="setting-label">纸张尺寸</div><div class="option-row">${['A4','A3','A2','A1','A0','精简'].map(sz => `<div class="option-chip ${s.size === sz ? 'active' : ''}" data-setting="size" data-value="${sz}">${sz}</div>`).join('')}</div></div>
+                    <div class="setting-group"><div class="setting-label">纸张类型</div><div class="option-row"><div class="option-chip ${s.paperType === '普通纸' ? 'active' : ''}" data-setting="paperType" data-value="普通纸">普通纸</div></div></div>
+                    <div class="setting-group"><div class="setting-label">表格排版</div><div class="option-row">${['自动排版','所有内容排在一页','所有行排在一页','所有列排在一页'].map(l => `<div class="option-chip ${s.layout === l ? 'active' : ''}" data-setting="layout" data-value="${l}">${l}</div>`).join('')}</div></div>
+                    <div class="setting-group"><div class="setting-label">页范围</div><div class="option-row"><div class="option-chip ${s.pageRangeMode === 'all' ? 'active' : ''}" data-setting="pageRangeMode" data-value="all">全部打印</div><div class="option-chip ${s.pageRangeMode === 'custom' ? 'active' : ''}" data-setting="pageRangeMode" data-value="custom">选页打印</div></div>${s.pageRangeMode === 'custom' ? `<div class="range-input" style="margin-top: 12px;"><span>第</span><input type="number" id="startPage" value="${s.startPage}" min="1" max="${file.totalPages}"><span>-</span><input type="number" id="endPage" value="${s.endPage}" min="1" max="${file.totalPages}"><span>页</span></div>` : ''}</div>
+                    <div class="setting-group"><div class="setting-label">打印方式</div><div class="option-row">${['单面','双面'].map(d => `<div class="option-chip ${s.duplex === d ? 'active' : ''}" data-setting="duplex" data-value="${d}">${d}</div>`).join('')}</div></div>
+                    <div class="setting-group"><div class="setting-label">缩印(多合一)效果预览</div><div class="option-row">${['不缩印','2合1','4合1'].map(n => `<div class="option-chip ${s.nUp === n ? 'active' : ''}" data-setting="nUp" data-value="${n}">${n}</div>`).join('')}</div></div>
+                    <div class="setting-group"><div class="setting-label">打印份数</div><div class="quantity-control"><div class="quantity-btn" id="decCopies">-</div><span id="copiesValue">${s.copies}</span><div class="quantity-btn" id="incCopies">+</div></div></div>`;
+    settingsContent.innerHTML = html;
+    document.querySelectorAll('[data-setting]').forEach(el => {
+      el.addEventListener('click', () => {
+        const setting = el.getAttribute('data-setting');
+        const value = el.getAttribute('data-value');
+        if (setting === 'pageRangeMode') { s[setting] = value; if (value === 'custom') { s.startPage = 1; s.endPage = file.totalPages; } }
+        else { s[setting] = value; }
+        updateAllPrices(); renderSettingsPanel(fileId);
+      });
+    });
+    if (s.pageRangeMode === 'custom') {
+      const startInput = document.getElementById('startPage');
+      const endInput = document.getElementById('endPage');
+      if (startInput) startInput.addEventListener('change', () => { let val = parseInt(startInput.value) || 1; val = Math.min(Math.max(val, 1), file.totalPages); s.startPage = val; if (s.endPage < val) s.endPage = val; if (endInput) endInput.value = s.endPage; updateAllPrices(); renderSettingsPanel(fileId); });
+      if (endInput) endInput.addEventListener('change', () => { let val = parseInt(endInput.value) || file.totalPages; val = Math.min(Math.max(val, s.startPage), file.totalPages); s.endPage = val; updateAllPrices(); renderSettingsPanel(fileId); });
+    }
+    const decBtn = document.getElementById('decCopies');
+    const incBtn = document.getElementById('incCopies');
+    if (decBtn) decBtn.onclick = () => { s.copies = Math.max(1, s.copies - 1); document.getElementById('copiesValue').innerText = s.copies; updateAllPrices(); renderSettingsPanel(fileId); };
+    if (incBtn) incBtn.onclick = () => { s.copies = Math.min(99, s.copies + 1); document.getElementById('copiesValue').innerText = s.copies; updateAllPrices(); renderSettingsPanel(fileId); };
+    filePriceSpan.innerText = `¥${file.price.toFixed(2)}`;
+  }
+  function deleteFile(id) {
+    files = files.filter(f => f.id !== id);
+    if (selectedFileId === id) selectedFileId = null;
+    updateAllPrices(); renderFileList();
+    if (files.length === 0) settingsPanel.style.display = 'none';
+    else selectFile(files[0].id);
+    showToast('已删除文件');
+  }
+  function addFiles(rawFiles) {
+    for (let raw of rawFiles) {
+      let totalPages = 2;
+      if (raw.type.startsWith('image/')) totalPages = 1;
+      let userPages = prompt(`请输入“${raw.name}”的总页数（默认${totalPages}页）:`, totalPages);
+      if (userPages !== null && !isNaN(parseInt(userPages)) && parseInt(userPages) > 0) totalPages = parseInt(userPages);
+      else if (userPages === null) continue;
+      const newFile = { id: nextId++, name: raw.name, totalPages: totalPages, settings: getDefaultSettings(), price: 0 };
+      newFile.settings.endPage = totalPages;
+      files.push(newFile);
+    }
+    updateAllPrices();
+    if (files.length > 0 && selectedFileId === null) selectFile(files[0].id);
+    renderFileList();
+  }
+  uploadBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => { if (fileInput.files.length > 0) { addFiles(Array.from(fileInput.files)); fileInput.value = ''; } });
+  backBtn.addEventListener('click', () => { if (typeof goTo === 'function') goTo('print.html'); else window.location.href = 'print.html'; });
+  confirmBtn.addEventListener('click', () => {
+    if (files.length === 0) { showToast('请先添加文件'); return; }
+    let total = files.reduce((sum, f) => sum + f.price, 0);
+    let detail = `共 ${files.length} 个文件，合计 ¥${total.toFixed(2)}\n`;
+    files.forEach(f => { detail += `\n${f.name} (${f.totalPages}页)  ${f.settings.color === 'bw' ? '黑白' : '彩色'} ${f.settings.size} ×${f.settings.copies}份 = ¥${f.price.toFixed(2)}`; });
+    if (confirm(`确认支付？\n${detail}`)) { showToast('支付成功！请到店取件'); files = []; selectedFileId = null; updateAllPrices(); renderFileList(); settingsPanel.style.display = 'none'; }
+  });
+  function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+  updateAllPrices(); renderFileList();
+</script>
+</body>
+</html>

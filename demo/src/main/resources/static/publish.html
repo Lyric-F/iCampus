@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>发布动态 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f5f7fb;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            padding-bottom: 20px;
+        }
+        body.dark {
+            background: #0a0c15;
+        }
+        .app-container {
+            max-width: 540px;
+            margin: 0 auto;
+            background: inherit;
+            min-height: 100vh;
+        }
+        .top-bar {
+            background: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #eef2f6;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        body.dark .top-bar {
+            background: #13182a;
+            border-color: #2c2e3a;
+        }
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f7;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .top-title {
+            flex: 1;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .content-card {
+            background: white;
+            border-radius: 28px;
+            margin: 16px;
+            padding: 20px;
+            border: 1px solid #eef2f6;
+        }
+        body.dark .content-card {
+            background: #13182a;
+            border-color: #2c2e3a;
+        }
+        .form-item {
+            margin-bottom: 20px;
+        }
+        .form-item label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1c1c1e;
+        }
+        body.dark .form-item label {
+            color: #b3c0e5;
+        }
+        .form-item input, .form-item textarea, .form-item select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #eef2f6;
+            border-radius: 28px;
+            font-size: 15px;
+            background: #fafcff;
+            font-family: inherit;
+        }
+        body.dark .form-item input, body.dark .form-item textarea, body.dark .form-item select {
+            background: #1e253e;
+            border-color: #2c2e3a;
+            color: white;
+        }
+        .textarea-wrapper {
+            position: relative;
+        }
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: #8e8e93;
+            margin-top: 8px;
+        }
+        .option-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #eef2f6;
+        }
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #0071e3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        .image-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .image-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #f5f5f7;
+        }
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .image-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .add-image-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            background: #f5f5f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: #0071e3;
+            cursor: pointer;
+            border: 1px dashed #ddd;
+        }
+        .publish-btn {
+            background: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 44px;
+            padding: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            margin: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .category-modal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 540px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 28px 28px 0 0;
+            z-index: 1000;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        }
+        .category-modal.show {
+            transform: translateY(0);
+        }
+        .category-modal-header {
+            padding: 16px;
+            font-weight: 600;
+            text-align: center;
+            border-bottom: 1px solid #eef2f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .category-list {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+        .category-option {
+            padding: 14px 20px;
+            font-size: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .category-option.highlight {
+            background: #fff3e0;
+            color: #e67e22;
+            font-weight: 600;
+            border-left: 4px solid #e67e22;
+        }
+        body.dark .category-option.highlight {
+            background: #2a2a2a;
+            color: #f39c12;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+        .modal-overlay.show {
+            display: block;
+        }
+        body.dark .category-modal {
+            background: #13182a;
+        }
+        /* 隐藏标题输入框的初始状态 */
+        #titleGroup {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-bar">
+        <div class="back-btn" onclick="goTo('index.html')"><i class="fas fa-arrow-left"></i></div>
+        <div class="top-title">发布动态</div>
+        <div style="width:36px;"></div>
+    </div>
+    <div class="content-card">
+        <!-- 分类选择行（与之前设计相同，但放在顶部） -->
+        <div class="option-row" style="border-top: none; margin-top: 0; padding-top: 0;">
+            <div class="option-label"><i class="fas fa-tag"></i> 主题分类</div>
+            <button id="categorySelectBtn" class="category-btn" style="background: #f5f5f7; border: none; border-radius: 40px; padding: 8px 20px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <span id="selectedCategory">未选择</span> <i class="fas fa-chevron-down"></i>
+            </button>
+        </div>
+
+        <!-- 标题输入框（仅特殊类型显示） -->
+        <div id="titleGroup" class="form-item">
+            <label><i class="fas fa-heading"></i> 标题</label>
+            <input type="text" id="postTitle" placeholder="请输入标题（必填）">
+        </div>
+
+        <!-- 内容输入框 -->
+        <div class="form-item">
+            <label><i class="fas fa-pen"></i> 内容</label>
+            <div class="textarea-wrapper">
+                <textarea id="postContent" rows="6" placeholder="说点什么吧～（请输入投稿内容）" maxlength="1000"></textarea>
+                <div class="char-count"><span id="charCount">0</span>/1000</div>
+            </div>
+        </div>
+
+        <!-- 匿名和置顶开关 -->
+        <div class="option-row">
+            <div class="option-label"><i class="fas fa-user-secret"></i> 匿名发布</div>
+            <label class="switch">
+                <input type="checkbox" id="anonymousSwitch">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="option-row">
+            <div class="option-label"><i class="fas fa-thumbtack"></i> 发布后置顶</div>
+            <label class="switch">
+                <input type="checkbox" id="topSwitch">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <!-- 图片上传区域 -->
+        <div class="image-grid" id="imageGrid">
+            <div class="add-image-btn" id="addImageBtn"><i class="fas fa-plus"></i></div>
+        </div>
+        <input type="file" id="imageInput" accept="image/*" multiple style="display:none">
+    </div>
+    <div class="publish-btn" id="publishBtn">发 布</div>
+</div>
+
+<!-- 分类弹窗 -->
+<div id="categoryModalOverlay" class="modal-overlay"></div>
+<div id="categoryModal" class="category-modal">
+    <div class="category-modal-header">
+        <span>选择主题分类</span>
+        <i class="fas fa-times" id="closeCategoryModal" style="cursor:pointer"></i>
+    </div>
+    <div class="category-list" id="categoryList"></div>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+    // 普通用户分类列表
+    const baseCategories = ["二手交易", "失物招领", "助农", "互助", "树洞", "表白墙", "吐槽"];
+    // 管理员额外分类（高亮）
+    const adminCategories = ["校园公告", "活动报名"];
+
+    let selectedCategory = null;
+    let isAdmin = false;
+    let imageFiles = [];
+
+    const textarea = document.getElementById('postContent');
+    const charCountSpan = document.getElementById('charCount');
+    textarea.addEventListener('input', function() {
+        charCountSpan.innerText = this.value.length;
+    });
+
+    // 获取管理员状态
+    async function fetchAdminStatus() {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) return false;
+        try {
+            const res = await fetch(`${window.API_BASE_URL || ''}/api/user/info?studentId=${studentId}`);
+            const user = await res.json();
+            isAdmin = (user.role === 'ADMIN');
+            return isAdmin;
+        } catch(e) { console.warn(e); return false; }
+    }
+
+    // 根据分类动态显示/隐藏标题输入框
+    function toggleTitleInput() {
+        const titleGroup = document.getElementById('titleGroup');
+        if (!selectedCategory) {
+            titleGroup.style.display = 'none';
+            return;
+        }
+        const isSpecial = (selectedCategory === '校园公告' || selectedCategory === '活动报名');
+        titleGroup.style.display = isSpecial ? 'block' : 'none';
+    }
+
+    // 渲染分类弹窗
+    function renderCategoryModal() {
+        const container = document.getElementById('categoryList');
+        let allCategories = [...baseCategories];
+        if (isAdmin) {
+            allCategories = [...allCategories, ...adminCategories];
+        }
+        container.innerHTML = allCategories.map(cat => {
+            const isSpecial = isAdmin && adminCategories.includes(cat);
+            return `<div class="category-option ${isSpecial ? 'highlight' : ''}" data-category="${cat}">${cat}</div>`;
+        }).join('');
+        document.querySelectorAll('.category-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                selectedCategory = opt.getAttribute('data-category');
+                document.getElementById('selectedCategory').innerText = selectedCategory || '未选择';
+                toggleTitleInput();  // 切换标题框显示
+                closeCategoryModal();
+            });
+        });
+    }
+
+    function openCategoryModal() {
+        renderCategoryModal();
+        document.getElementById('categoryModal').classList.add('show');
+        document.getElementById('categoryModalOverlay').classList.add('show');
+    }
+    function closeCategoryModal() {
+        document.getElementById('categoryModal').classList.remove('show');
+        document.getElementById('categoryModalOverlay').classList.remove('show');
+    }
+
+    // 图片上传处理（不变）
+    function handleImageSelect(files) {
+        const maxCount = 9;
+        const currentCount = imageFiles.length;
+        const remaining = maxCount - currentCount;
+        const selected = Array.from(files).slice(0, remaining);
+        for (let file of selected) {
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('单张图片不能超过5MB', 'error');
+                continue;
+            }
+            imageFiles.push(file);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'image-item';
+                imgDiv.innerHTML = `<img src="${e.target.result}"><div class="image-delete"><i class="fas fa-times"></i></div>`;
+                const deleteBtn = imgDiv.querySelector('.image-delete');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const index = imageFiles.findIndex(f => f === file);
+                    if (index !== -1) imageFiles.splice(index, 1);
+                    imgDiv.remove();
+                });
+                const addBtn = document.getElementById('addImageBtn');
+                document.getElementById('imageGrid').insertBefore(imgDiv, addBtn);
+            };
+            reader.readAsDataURL(file);
+        }
+        if (selected.length === 0 && files.length > 0) {
+            showToast(`最多上传${maxCount}张图片`, 'error');
+        }
+    }
+
+    async function uploadImages() {
+        if (imageFiles.length === 0) return [];
+        const formData = new FormData();
+        for (let file of imageFiles) {
+            formData.append('images', file);
+        }
+        const studentId = localStorage.getItem('studentId');
+        formData.append('studentId', studentId);
+        try {
+            const res = await fetch(`${window.API_BASE_URL || ''}/api/post/upload-images`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                return data.urls || [];
+            } else {
+                showToast(data.message || '图片上传失败', 'error');
+                return [];
+            }
+        } catch(e) {
+            showToast('图片上传网络错误', 'error');
+            return [];
+        }
+    }
+
+    // 发布帖子
+    async function publishPost() {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) {
+            showToast('请先登录', 'error');
+            goTo('login.html');
+            return;
+        }
+        if (!selectedCategory) {
+            showToast('请选择主题分类', 'error');
+            return;
+        }
+        let title = '';
+        let content = '';
+        const isSpecial = (selectedCategory === '校园公告' || selectedCategory === '活动报名');
+        if (isSpecial) {
+            title = document.getElementById('postTitle').value.trim();
+            content = textarea.value.trim();
+            if (!title) {
+                showToast('请输入标题', 'error');
+                return;
+            }
+            if (!content) {
+                showToast('请输入内容', 'error');
+                return;
+            }
+        } else {
+            content = textarea.value.trim();
+            if (!content) {
+                showToast('内容不能为空', 'error');
+                return;
+            }
+            // 普通帖子标题为空，后端会自动生成
+            title = '';
+        }
+
+        let imageUrls = [];
+        if (imageFiles.length > 0) {
+            showToast('正在上传图片...', 'info');
+            imageUrls = await uploadImages();
+            if (imageUrls.length !== imageFiles.length) {
+                showToast('部分图片上传失败，请重试', 'error');
+                return;
+            }
+        }
+
+        const isAnonymous = document.getElementById('anonymousSwitch').checked;
+        const isTop = document.getElementById('topSwitch').checked;
+        const imagesJson = imageUrls.length ? JSON.stringify(imageUrls) : null;
+
+        const formData = new URLSearchParams();
+        formData.append('studentId', studentId);
+        formData.append('type', selectedCategory);
+        formData.append('title', title);
+        formData.append('content', content);
+        formData.append('anonymous', isAnonymous);
+        if (imagesJson) formData.append('images', imagesJson);
+        if (isTop) formData.append('top', 'true');
+
+        try {
+            const res = await fetch(`${window.API_BASE_URL || ''}/api/post/publish`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('发布成功', 'success');
+                setTimeout(() => goTo('index.html'), 1500);
+            } else {
+                showToast(data.message || '发布失败', 'error');
+            }
+        } catch(e) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    async function init() {
+        await fetchAdminStatus();
+        document.getElementById('categorySelectBtn').addEventListener('click', openCategoryModal);
+        document.getElementById('closeCategoryModal').addEventListener('click', closeCategoryModal);
+        document.getElementById('categoryModalOverlay').addEventListener('click', closeCategoryModal);
+        document.getElementById('addImageBtn').addEventListener('click', () => {
+            document.getElementById('imageInput').click();
+        });
+        document.getElementById('imageInput').addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleImageSelect(e.target.files);
+                e.target.value = '';
+            }
+        });
+        document.getElementById('publishBtn').addEventListener('click', publishPost);
+        // 初始隐藏标题框
+        toggleTitleInput();
+    }
+    init();
+</script>
+</body>
+</html>

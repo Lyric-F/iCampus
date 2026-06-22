@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>校园兼职 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #fafcff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+        .app-container {
+            max-width: 540px;
+            width: 100%;
+            margin: 0 auto;
+            background: inherit;
+            position: relative;
+        }
+        .tabbar {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-bar">
+        <div class="back-btn" onclick="goTo('index.html')"><i class="fas fa-arrow-left"></i></div>
+        <div class="search-bar" style="flex:1;">
+            <i class="fas fa-search"></i>
+            <input id="jobSearchInput" type="text" placeholder="搜兼职岗位、地点" oninput="filterJobs()">
+        </div>
+        <div class="top-right" style="position:relative;">
+            <i class="fas fa-ellipsis-h" id="jobMenuBtn" style="color:#ffcc00; font-size:24px; cursor:pointer;"></i>
+            <div id="jobMenuDropdown" class="job-menu-dropdown" style="display:none;">
+                <div class="job-menu-item" id="publishJobBtn"><i class="fas fa-plus-circle" style="color:#ffcc00;"></i> 发布兼职</div>
+                <div class="job-menu-item" id="manageMyJobsBtn"><i class="fas fa-list-ul" style="color:#ffcc00;"></i> 管理已发布</div>
+            </div>
+        </div>
+    </div>
+    <div id="jobList" class="post-list" style="padding: 12px 20px;"></div>
+
+    <!-- 兼职详情模态框 -->
+    <div id="jobDetailModal" class="job-detail-modal" style="display:none;">
+        <div class="job-detail-overlay"></div>
+        <div class="job-detail-container">
+            <div class="job-detail-header">
+                <span class="job-detail-title" id="detailTitle"></span>
+                <i class="fas fa-times" id="closeDetailBtn"></i>
+            </div>
+            <div class="job-detail-content">
+                <div class="job-detail-section">
+                    <div class="job-detail-label"><i class="fas fa-clock"></i> 工作时间</div>
+                    <div class="job-detail-text" id="detailWorkTime"></div>
+                </div>
+                <div class="job-detail-section">
+                    <div class="job-detail-label"><i class="fas fa-map-marker-alt"></i> 工作地点</div>
+                    <div class="job-detail-text" id="detailLocation"></div>
+                </div>
+                <div class="job-detail-section">
+                    <div class="job-detail-label"><i class="fas fa-users"></i> 所需人数</div>
+                    <div class="job-detail-text" id="detailPeopleCount"></div>
+                </div>
+                <div class="job-detail-section">
+                    <div class="job-detail-label"><i class="fas fa-list-check"></i> 工作要求</div>
+                    <div class="job-detail-text" id="detailRequirements" style="white-space: pre-wrap;"></div>
+                </div>
+                <div class="job-detail-section">
+                    <div class="job-detail-label"><i class="fas fa-file-alt"></i> 详细描述</div>
+                    <div class="job-detail-text" id="detailDescription" style="white-space: pre-wrap;"></div>
+                </div>
+                <div class="job-detail-section">
+                    <div class="job-detail-label"><i class="fas fa-phone-alt"></i> 联系电话</div>
+                    <div class="job-detail-text" id="detailPhone"></div>
+                </div>
+                <div class="job-detail-footer">
+                    <span id="detailTime"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="publishJobModal" class="job-publish-modal" style="display:none;">
+        <div class="job-publish-overlay"></div>
+        <div class="job-publish-container">
+            <div class="job-publish-header">
+                <span>发布兼职</span>
+                <i class="fas fa-times" id="closePublishBtn"></i>
+            </div>
+            <div class="job-publish-content">
+                <div class="form-item">
+                    <label>标题 <span style="color:#ff3b30;">*</span></label>
+                    <input id="jobTitle" placeholder="例如：校园外卖员">
+                </div>
+                <div class="form-item">
+                    <label>工作时间</label>
+                    <input id="jobWorkTime" placeholder="如：周一至周五 17:00-20:00">
+                </div>
+                <div class="form-item">
+                    <label>工作地点</label>
+                    <input id="jobLocation" placeholder="如：南区食堂">
+                </div>
+                <div class="form-item">
+                    <label>所需人数</label>
+                    <input id="jobPeopleCount" placeholder="如：2人">
+                </div>
+                <div class="form-item">
+                    <label>工作要求</label>
+                    <textarea id="jobRequirements" rows="3" placeholder="每条要求换行或以列表形式"></textarea>
+                </div>
+                <div class="form-item">
+                    <label>详细描述</label>
+                    <textarea id="jobDescription" rows="4" placeholder="薪资、福利、联系方式等"></textarea>
+                </div>
+                <div class="form-item">
+                    <label>联系电话 <span style="color:#ff3b30;">*</span></label>
+                    <input id="jobPhone" placeholder="手机号 / 微信号 / QQ">
+                </div>
+            </div>
+            <div class="job-publish-footer">
+                <button class="job-publish-cancel">取消</button>
+                <button class="job-publish-submit">发布</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="manageJobsModal" class="job-manage-modal" style="display:none;">
+        <div class="job-manage-overlay"></div>
+        <div class="job-manage-container">
+            <div class="job-manage-header">
+                <span>我发布的兼职</span>
+                <i class="fas fa-times" id="closeManageBtn"></i>
+            </div>
+            <div id="myJobsList" class="job-manage-list"></div>
+        </div>
+    </div>
+
+    <div class="tabbar" style="display:none;">
+        <div class="tabbar-item" onclick="goTo('index.html')"><i class="fas fa-home"></i><span>首页</span></div>
+        <div class="tabbar-item" onclick="goTo('help.html')"><i class="fas fa-planet-ringed"></i><span>互助</span></div>
+        <div class="tabbar-item" onclick="goTo('publish.html')"><div class="tabbar-publish"><i class="fas fa-plus"></i></div></div>
+        <div class="tabbar-item" onclick="goTo('msg.html')"><i class="far fa-comment"></i><span>消息</span></div>
+        <div class="tabbar-item" onclick="goTo('mine.html')"><i class="far fa-user"></i><span>我的</span></div>
+    </div>
+</div>
+<script src="js/common.js"></script>
+<script>
+    window.addEventListener('load', () => {
+        loadJobs();
+        bindJobEvents();
+        updateMsgBadge();
+    });
+</script>
+</body>
+</html>

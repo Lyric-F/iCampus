@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>文件急送 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #fafcff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+        .app-container {
+            max-width: 540px;
+            width: 100%;
+            margin: 0 auto;
+            background: inherit;
+            position: relative;
+        }
+        .tabbar { display: none !important; }
+        .top-bar {
+            background: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #eef2f6;
+        }
+        body.dark .top-bar { background: #13182a; border-color: #2c2e3a; }
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f7;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .top-title {
+            flex: 1;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            margin: 16px;
+            border: 1px solid #eef2f6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        body.dark .card { background: #13182a; border-color: #2c2e3a; }
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-item { margin-bottom: 16px; }
+        .form-item label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #1c1c1e;
+        }
+        body.dark .form-item label { color: #b3c0e5; }
+        .form-item input, .form-item textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #eef2f6;
+            border-radius: 28px;
+            font-size: 14px;
+            background: white;
+            color: #1c1c1e;
+        }
+        body.dark .form-item input, body.dark .form-item textarea {
+            background: #1e253e;
+            border-color: #2c2e3a;
+            color: white;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: normal;
+            cursor: pointer;
+            user-select: none;
+        }
+        .checkbox-group input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+        .btn {
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 16px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .btn:active { transform: scale(0.98); }
+        body.dark .btn { background: #0a84ff; }
+        .price-preview {
+            background: #fff7f0;
+            border-radius: 24px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            border: 1px solid #ffe0cc;
+        }
+        .price-preview .total { font-size: 22px; color: #ff5e2c; }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-bar">
+        <div class="back-btn" onclick="goTo('run.html')"><i class="fas fa-arrow-left"></i></div>
+        <div class="top-title">文件急送</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-file-signature"></i> 急送信息</div>
+        <div class="form-item">
+            <label>文件描述 <span style="color:red;">*</span></label>
+            <input type="text" id="fileDesc" placeholder="例如：合同、作业、证件">
+        </div>
+        <div class="form-item">
+            <label>取件地点 <span style="color:red;">*</span></label>
+            <input type="text" id="fileFrom" placeholder="教学楼 / 宿舍楼 / 办公室">
+        </div>
+        <div class="form-item">
+            <label>送达地点 <span style="color:red;">*</span></label>
+            <input type="text" id="fileTo" placeholder="行政楼 / 图书馆 / 其他">
+        </div>
+        <div class="form-item">
+            <label>期望送达时间</label>
+            <input type="text" id="fileTime" placeholder="例如：尽快 / 30分钟内">
+        </div>
+        <div class="form-item">
+            <label>备注（可选）</label>
+            <textarea id="fileRemark" rows="2" placeholder="特殊要求，如：需本人签收"></textarea>
+        </div>
+        <div class="form-item">
+            <label>联系电话 <span style="color:red;">*</span></label>
+            <input type="tel" id="userPhone" placeholder="手机号">
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-pen-alt"></i> 附加选项</div>
+        <div class="form-item">
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="urgentCheckbox"> 🔥 急用（加急优先处理）</label>
+            </div>
+        </div>
+        <div class="form-item" id="tipField" style="display: none;">
+            <label>额外小费 (元)</label>
+            <input type="number" id="tipAmount" value="0" step="1" min="0" placeholder="给跑腿员的小费">
+        </div>
+    </div>
+
+    <div class="price-preview">
+        <span>💰 极速费用</span>
+        <span class="total" id="totalPrice">¥2.00</span>
+    </div>
+
+    <div class="btn" id="submitFile"><i class="fas fa-rocket"></i> 发布文件急送</div>
+</div>
+<script src="js/common.js"></script>
+<script>
+    const urgentCheckbox = document.getElementById('urgentCheckbox');
+    const tipField = document.getElementById('tipField');
+    const tipInput = document.getElementById('tipAmount');
+    const totalSpan = document.getElementById('totalPrice');
+
+    function updateTotal() {
+        let base = 2;
+        let tip = 0;
+        if (urgentCheckbox.checked) {
+            tip = parseFloat(tipInput.value);
+            if (isNaN(tip)) tip = 0;
+        }
+        totalSpan.innerText = `¥${base + tip}.00`;
+    }
+
+    urgentCheckbox.addEventListener('change', function() {
+        tipField.style.display = this.checked ? 'block' : 'none';
+        if (!this.checked) tipInput.value = 0;
+        updateTotal();
+    });
+
+    tipInput.addEventListener('input', updateTotal);
+
+    document.getElementById('submitFile').addEventListener('click', async function() {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) {
+            showToast('请先登录', 'error');
+            goTo('login.html');
+            return;
+        }
+
+        const desc = document.getElementById('fileDesc').value.trim();
+        const from = document.getElementById('fileFrom').value.trim();
+        const to = document.getElementById('fileTo').value.trim();
+        const time = document.getElementById('fileTime').value.trim();
+        const remark = document.getElementById('fileRemark').value.trim();
+        const userPhone = document.getElementById('userPhone').value.trim();
+        const urgent = urgentCheckbox.checked;
+        let tip = 0;
+        if (urgent) {
+            tip = parseFloat(tipInput.value);
+            if (isNaN(tip)) tip = 0;
+        }
+
+        if (!desc) { showToast('请描述文件内容', 'error'); return; }
+        if (!from) { showToast('请填写取件地点', 'error'); return; }
+        if (!to) { showToast('请填写送达地点', 'error'); return; }
+        if (!userPhone) { showToast('请填写联系电话', 'error'); return; }
+
+        const totalReward = 2 + tip;
+        const extra = `文件：${desc}；期望时间：${time || "尽快"}；备注：${remark || "无"}${urgent ? `；🔥急用 + 小费${tip}元` : ''}`;
+
+        const details = JSON.stringify({
+            type: "文件急送",
+            pickup: from,
+            delivery: to,
+            extra: extra,
+            contact: userPhone,
+            urgent: urgent,
+            reward: totalReward
+        });
+
+        const order = {
+            studentId: studentId,
+            orderType: 'RUN',
+            amount: totalReward,
+            details: details
+        };
+
+        try {
+            const res = await fetch(API_BASE_URL + '/api/order/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(order)
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('✅ 文件急送任务已发布！', 'success');
+                setTimeout(() => goTo('run.html'), 1200);
+            } else {
+                showToast(data.message || '发布失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误，请重试', 'error');
+        }
+    });
+</script>
+</body>
+</html>

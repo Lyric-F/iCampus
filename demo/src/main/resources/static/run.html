@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>跑腿生活 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ========== 样式（与 run (1).html 保持一致） ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #fafcff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+        .app-container {
+            max-width: 540px;
+            width: 100%;
+            margin: 0 auto;
+            background: inherit;
+            position: relative;
+        }
+        .tabbar {
+            display: none !important;
+        }
+        .top-bar {
+            background: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #eef2f6;
+        }
+        body.dark .top-bar {
+            background: #13182a;
+            border-color: #2c2e3a;
+        }
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f7;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .top-title {
+            flex: 1;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            margin: 16px;
+            border: 1px solid #eef2f6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .card-title-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .run-subitem {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+        .run-subitem:active {
+            background: #f5f5f7;
+            border-radius: 20px;
+        }
+        .run-subicon {
+            width: 48px;
+            height: 48px;
+            background: #f0f2f5;
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #007aff;
+        }
+        .card-info {
+            color: #5c6072;
+            line-height: 1.4;
+        }
+        body.dark .card {
+            background: #13182a;
+            border-color: #2c2e3a;
+        }
+        body.dark .run-subicon {
+            background: #1e253e;
+            color: #6c8cff;
+        }
+        body.dark .card-info {
+            color: #b3c0e5;
+        }
+        /* 筛选栏样式 */
+        .filter-bar {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            border-bottom: 1px solid #eef2f6;
+            padding-bottom: 12px;
+        }
+        .filter-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-right: 4px;
+        }
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f5f7fb;
+            padding: 6px 12px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.1s;
+            font-size: 13px;
+        }
+        .filter-checkbox input {
+            margin: 0;
+            cursor: pointer;
+        }
+        body.dark .filter-checkbox {
+            background: #1e253e;
+            color: #b3c0e5;
+        }
+        body.dark .filter-label {
+            color: #b3c0e5;
+        }
+        /* 任务列表样式 */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .task-item {
+            background: #f9fafc;
+            border-radius: 24px;
+            padding: 14px;
+            border: 1px solid #eef2f6;
+            transition: all 0.2s;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .task-info {
+            flex: 1;
+            min-width: 180px;
+        }
+        .task-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 6px;
+            color: #1c1c1e;
+        }
+        body.dark .task-type {
+            color: #eef3fc;
+        }
+        .task-detail {
+            font-size: 13px;
+            color: #6c6f82;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+        body.dark .task-detail {
+            color: #9aa9cc;
+        }
+        .task-price {
+            font-size: 18px;
+            font-weight: 800;
+            color: #ff6b2c;
+            margin-right: 12px;
+            white-space: nowrap;
+        }
+        .accept-btn {
+            background: #007aff;
+            border: none;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.1s linear;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .accept-btn:active {
+            transform: scale(0.96);
+            background: #005fc7;
+        }
+        .refresh-btn {
+            background: #f0f2f5;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 32px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: 0.1s;
+            color: #2c3e50;
+        }
+        .refresh-btn:active {
+            transform: scale(0.96);
+            background: #e2e6ec;
+        }
+        .empty-tasks {
+            text-align: center;
+            padding: 32px 20px;
+            color: #8e92a8;
+            font-size: 15px;
+        }
+        .badge-hot {
+            background: #ffede3;
+            color: #ff5e2c;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 30px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+        body.dark .badge-hot {
+            background: #2a241f;
+            color: #ff9f6e;
+        }
+        body.dark .task-item {
+            background: #0f1422;
+            border-color: #2c2e3a;
+        }
+        body.dark .refresh-btn {
+            background: #2c2e3a;
+            color: #eef2fc;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .rotate-icon {
+            animation: spin 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-bar">
+        <div class="back-btn" onclick="goTo('index.html')"><i class="fas fa-arrow-left"></i></div>
+        <div class="top-title">跑腿·闪电达</div>
+    </div>
+
+    <!-- 即时服务卡片（点击跳转到子页面） -->
+    <div class="card">
+        <div class="card-title">
+            <div class="card-title-left">
+                <i class="fas fa-bolt"></i> 即时服务
+            </div>
+        </div>
+        <div class="run-subitem" onclick="goTo('dry.html')">
+            <div class="run-subicon"><i class="fas fa-tshirt"></i></div>
+            <div><div style="font-weight:600;">干洗专送</div><div style="font-size:12px;">校内取送·精洗护理</div></div>
+        </div>
+        <div class="run-subitem" onclick="goTo('express.html')">
+            <div class="run-subicon"><i class="fas fa-box-open"></i></div>
+            <div><div style="font-weight:600;">代取快递</div><div>小件2元起 · 送到宿舍楼下</div></div>
+        </div>
+        <div class="run-subitem" onclick="goTo('buysend.html')">
+            <div class="run-subicon"><i class="fas fa-shopping-bag"></i></div>
+            <div><div style="font-weight:600;">代买/代送</div><div>5元/次 · 食堂超市任意</div></div>
+        </div>
+        <div class="run-subitem" onclick="goTo('filesend.html')">
+            <div class="run-subicon"><i class="fas fa-file-signature"></i></div>
+            <div><div style="font-weight:600;">文件急送</div><div>2元/次 · 校内极速达</div></div>
+        </div>
+    </div>
+
+    <!-- 接单大厅 -->
+    <div class="card" id="taskHallCard">
+        <div class="card-title">
+            <div class="card-title-left">
+                <i class="fas fa-hand-holding-heart"></i>
+                <span>🏃 接单大厅 · 待跑腿任务</span>
+            </div>
+            <button class="refresh-btn" id="refreshTasksBtn"><i class="fas fa-sync-alt"></i> 刷新任务</button>
+        </div>
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
+            <span class="filter-label">筛选业务：</span>
+            <label class="filter-checkbox" data-type="干洗专送">
+                <input type="checkbox" value="干洗专送" checked> 干洗专送
+            </label>
+            <label class="filter-checkbox" data-type="代取快递">
+                <input type="checkbox" value="代取快递" checked> 代取快递
+            </label>
+            <label class="filter-checkbox" data-type="代买/代送">
+                <input type="checkbox" value="代买/代送" checked> 代买/代送
+            </label>
+            <label class="filter-checkbox" data-type="文件急送">
+                <input type="checkbox" value="文件急送" checked> 文件急送
+            </label>
+        </div>
+        <div id="taskListContainer" class="task-list">
+            <div class="empty-tasks">加载任务中...</div>
+        </div>
+        <div class="card-info" style="margin-top: 12px; font-size:12px; text-align:center;">
+            <i class="fas fa-motorcycle"></i> 接单后请及时联系同学，诚信跑腿赚零花
+        </div>
+    </div>
+
+    <div class="tabbar" style="display:none;"></div>
+</div>
+
+<<script src="js/common.js"></script>
+<script>
+    let currentFilterTypes = ["干洗专送", "代取快递", "代买/代送", "文件急送"];
+
+    // 加载待接单任务（只从后端获取）
+    async function loadPendingTasks() {
+        try {
+            const res = await fetch(API_BASE_URL + '/api/order/run/tasks');
+            if (res.ok) {
+                const tasks = await res.json();
+                renderTaskList(tasks);
+            } else {
+                renderTaskList([]);
+            }
+        } catch (e) {
+            console.error('加载任务失败', e);
+            renderTaskList([]);
+        }
+    }
+
+    // 渲染任务列表
+    function renderTaskList(orders) {
+        const container = document.getElementById('taskListContainer');
+        if (!container) return;
+        // 根据筛选类型过滤
+        let filtered = orders.filter(order => {
+            try {
+                const details = JSON.parse(order.details);
+                return currentFilterTypes.includes(details.type);
+            } catch(e) {
+                return false;
+            }
+        });
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="empty-tasks">
+                <i class="fas fa-box-open" style="font-size: 28px; opacity: 0.6;"></i><br>
+                暂无待接单任务 🧹<br>
+                <span style="font-size:12px;">发布新任务试试吧~</span>
+            </div>`;
+            return;
+        }
+        let html = '';
+        filtered.forEach(order => {
+            let details;
+            try {
+                details = JSON.parse(order.details);
+            } catch(e) {
+                details = {};
+            }
+            const urgentBadge = details.urgent ? '<span class="badge-hot">🔥 急单</span>' : '';
+            html += `
+                <div class="task-item" data-task-id="${order.id}">
+                    <div class="task-info">
+                        <div class="task-type">
+                            <i class="fas ${getIconForType(details.type)}"></i> ${details.type}
+                            ${urgentBadge}
+                        </div>
+                        <div class="task-detail">
+                            📍 取件：${escapeHtml(details.pickup)}<br>
+                            🏁 送达：${escapeHtml(details.delivery)}<br>
+                            📝 备注：${escapeHtml(details.extra)}<br>
+                            📞 发布者：${escapeHtml(details.contact)}
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; align-self: center;">
+                        <span class="task-price">¥${order.amount}</span>
+                        <button class="accept-btn" data-id="${order.id}"><i class="fas fa-hand-peace"></i> 接单</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+        // 绑定接单按钮事件
+        document.querySelectorAll('.accept-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const orderId = btn.getAttribute('data-id');
+                await acceptTask(orderId);
+            });
+        });
+    }
+
+    // 获取图标
+    function getIconForType(type) {
+        switch(type) {
+            case '干洗专送': return 'fa-tshirt';
+            case '代取快递': return 'fa-box-open';
+            case '代买/代送': return 'fa-shopping-bag';
+            case '文件急送': return 'fa-file-signature';
+            default: return 'fa-hand-holding-heart';
+        }
+    }
+
+    // 接单处理（真实订单）
+    async function acceptTask(orderId) {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) {
+            showToast('请先登录', 'error');
+            goTo('login.html');
+            return;
+        }
+        try {
+            const formData = new URLSearchParams();
+            formData.append('orderId', orderId);
+            formData.append('runnerId', studentId);
+            const res = await fetch(API_BASE_URL + '/api/order/run/accept', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('接单成功！请及时联系发布者', 'success');
+                loadPendingTasks(); // 刷新任务列表
+                localStorage.setItem('icampus_need_refresh_orders', Date.now().toString());
+            } else {
+                showToast(data.message || '接单失败', 'error');
+            }
+        } catch(e) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    // 刷新任务
+    function refreshTasks() {
+        loadPendingTasks();
+        const refreshBtn = document.getElementById('refreshTasksBtn');
+        const icon = refreshBtn.querySelector('i');
+        if (icon) {
+            icon.classList.add('rotate-icon');
+            setTimeout(() => icon.classList.remove('rotate-icon'), 300);
+        }
+    }
+
+    // 初始化筛选器
+    function initFilters() {
+        const checkboxes = document.querySelectorAll('.filter-checkbox input');
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                const newTypes = [];
+                document.querySelectorAll('.filter-checkbox input:checked').forEach(input => {
+                    newTypes.push(input.value);
+                });
+                currentFilterTypes = newTypes;
+                loadPendingTasks();
+            });
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // 页面初始化
+    function init() {
+        initFilters();
+        loadPendingTasks();
+        const refreshBtn = document.getElementById('refreshTasksBtn');
+        refreshBtn.addEventListener('click', refreshTasks);
+    }
+    init();
+</script>
+</body>
+</html>

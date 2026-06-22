@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>个人中心 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 原样式保持不变（请保留您原有的完整样式） */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: #f5f7fb; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; transition: background 0.2s; display: flex; justify-content: center; min-height: 100vh; }
+        body.dark { background: #0a0c15; }
+        :root { --bg-body: #f5f7fb; --bg-card: #ffffff; --bg-elevated: #ffffff; --text-primary: #1c1c1e; --text-secondary: #8e8e93; --border-light: rgba(0, 0, 0, 0.04); --shadow-sm: 0 4px 12px rgba(0,0,0,0.02),0 1px 2px rgba(0,0,0,0.02); --shadow-md: 0 8px 24px rgba(0,0,0,0.04); --primary: #0071e3; --primary-soft: rgba(0,113,227,0.1); --danger: #ff3b30; }
+        body.dark { --bg-body: #0a0c15; --bg-card: #1c1c1e; --bg-elevated: #1c1c1e; --text-primary: #f5f5f7; --text-secondary: #98989e; --border-light: rgba(255,255,255,0.08); --shadow-sm: 0 4px 12px rgba(0,0,0,0.2); --shadow-md: 0 8px 24px rgba(0,0,0,0.3); }
+        .app-container { max-width: 540px; width: 100%; margin: 0 auto; background: var(--bg-body); min-height: 100vh; display: flex; flex-direction: column; }
+        .top-bar { background: var(--bg-card); padding: 12px 20px; display: flex; align-items: center; gap: 16px; border-bottom: 0.5px solid var(--border-light); position: sticky; top: 0; z-index: 20; }
+        .back-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.04); border-radius: 50%; cursor: pointer; color: var(--primary); }
+        body.dark .back-btn { background: rgba(255,255,255,0.08); }
+        .top-title { flex: 1; font-size: 20px; font-weight: 620; text-align: center; color: var(--text-primary); }
+        .top-right { width: 36px; text-align: right; cursor: pointer; color: var(--primary); font-size: 20px; }
+        .scroll-content { flex: 1; overflow-y: auto; padding: 16px 16px 90px; }
+        .skeleton { background: linear-gradient(90deg, #e9ecef 25%, #f8f9fa 50%, #e9ecef 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 16px; }
+        body.dark .skeleton { background: linear-gradient(90deg, #2c2c2e 25%, #3a3a3c 50%, #2c2c2e 75%); }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        .profile-card { background: var(--bg-elevated); border-radius: 28px; border: 0.5px solid var(--border-light); box-shadow: var(--shadow-sm); padding: 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+        .profile-left { display: flex; align-items: center; gap: 18px; }
+        .avatar-wrapper { width: 80px; height: 80px; }
+        .avatar, .avatar-placeholder { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: var(--primary-soft); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 600; color: var(--primary); }
+        .profile-info h3 { font-size: 20px; font-weight: 640; margin-bottom: 4px; color: var(--text-primary); }
+        .bio { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+        .student-id { font-size: 12px; background: var(--primary-soft); padding: 2px 10px; border-radius: 40px; display: inline-block; color: var(--primary); }
+        .profile-stats { display: flex; gap: 24px; }
+        .stat-item { text-align: center; cursor: pointer; }
+        .stat-number { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+        .stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+        .icon-menu { display: flex; justify-content: space-around; background: var(--bg-elevated); border-radius: 28px; padding: 16px 12px; margin-bottom: 24px; border: 0.5px solid var(--border-light); box-shadow: var(--shadow-sm); }
+        .icon-menu-item { text-align: center; cursor: pointer; flex: 1; }
+        .icon-menu-item i { font-size: 28px; color: var(--primary); margin-bottom: 6px; display: block; }
+        .icon-menu-item span { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+        .icon-menu-item .count { font-size: 12px; color: var(--text-secondary); margin-left: 4px; }
+        .menu-group { background: var(--bg-elevated); border-radius: 28px; border: 0.5px solid var(--border-light); box-shadow: var(--shadow-sm); margin-bottom: 20px; overflow: hidden; }
+        .menu-item { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border-bottom: 0.5px solid var(--border-light); cursor: pointer; transition: background 0.1s; }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:active { background: var(--primary-soft); }
+        .menu-item i { width: 28px; font-size: 20px; color: var(--primary); }
+        .menu-item span { flex: 1; font-size: 16px; font-weight: 500; color: var(--text-primary); }
+        .chevron { color: var(--text-secondary); font-size: 14px; opacity: 0.6; }
+        .logout-btn { text-align: center; padding: 14px; font-weight: 600; font-size: 17px; color: var(--danger); cursor: pointer; margin-top: 8px; background: rgba(255,59,48,0.08); border-radius: 28px; }
+        .logout-btn:active { transform: scale(0.97); background: rgba(255,59,48,0.15); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
+        .follow-modal { width: 85%; max-width: 400px; background: var(--bg-elevated); border-radius: 32px; max-height: 70vh; overflow-y: auto; box-shadow: 0 24px 48px rgba(0,0,0,0.2); animation: fadeScale 0.2s ease; }
+        .follow-modal-header { padding: 16px 20px; font-weight: 620; border-bottom: 0.5px solid var(--border-light); display: flex; justify-content: space-between; position: sticky; top: 0; background: inherit; }
+        .follow-list { padding: 8px 12px; }
+        .follow-item { display: flex; align-items: center; gap: 14px; padding: 12px; border-bottom: 0.5px solid var(--border-light); }
+        .follow-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--primary-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--primary); }
+        .follow-info { flex: 1; }
+        .follow-name { font-weight: 590; color: var(--text-primary); }
+        .follow-id { font-size: 12px; color: var(--text-secondary); }
+        .unfollow-btn, .chat-btn { border: none; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: 500; cursor: pointer; transition: transform 0.1s; }
+        .unfollow-btn { background: rgba(255,59,48,0.12); color: var(--danger); }
+        .chat-btn { background: var(--primary); color: white; }
+        .empty-follow { text-align: center; padding: 40px; color: var(--text-secondary); }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 540px; margin: 0 auto; background: var(--bg-card); display: flex; justify-content: space-around; padding: 8px 20px 22px; border-top: 0.5px solid var(--border-light); z-index: 99; }
+        .nav-item { position: relative;display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.7rem; color: #9095ae; cursor: pointer; }
+        .nav-item i { font-size: 1.35rem; }
+        .nav-item.active { color: var(--primary); font-weight: 600; }
+        .publish-btn { background: var(--primary); width: 52px; height: 52px; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin-top: -20px; box-shadow: 0 6px 16px rgba(0,113,227,0.2); color: white; font-size: 1.4rem; }
+        .tabbar { display: none !important; }
+        .notification-modal { width: 85%; max-width: 400px; background: var(--bg-elevated); border-radius: 32px; overflow: hidden; box-shadow: 0 24px 48px rgba(0,0,0,0.2); animation: fadeScale 0.2s ease; }
+        .notification-modal-header { padding: 16px 20px; font-weight: 620; border-bottom: 0.5px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; background: inherit; }
+        .notification-modal-header i { cursor: pointer; font-size: 20px; color: var(--text-secondary); }
+        .notification-modal-content { padding: 8px 0; }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 0.5px solid var(--border-light); }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-info { flex: 1; }
+        .setting-title { font-size: 16px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; }
+        .setting-desc { font-size: 12px; color: var(--text-secondary); }
+        .switch { position: relative; display: inline-block; width: 48px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: 0.3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #0071e3; }
+        input:checked + .slider:before { transform: translateX(24px); }
+        body.dark .slider { background-color: #3a3a3c; }
+        .follow-back-btn {
+            background: #0071e3;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .follow-back-btn:active {
+            transform: scale(0.94);
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #e9ecef 25%, #f8f9fa 50%, #e9ecef 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.2s infinite;
+            border-radius: 16px;
+        }
+
+        /* 夜间模式下骨架屏使用深色渐变 */
+        body.dark .skeleton {
+            background: linear-gradient(90deg, #2c2e3a 25%, #3a405a 50%, #2c2e3a 75%);
+            background-size: 200% 100%;
+        }
+        body.dark .stat-number {
+            color: var(--primary);  /* 主题色（蓝色/橙色），醒目且不刺眼 */
+            /* 或者纯白色：color: #ffffff; */
+            /* 或者深灰色：color: #2c2e3a; （可能不明显） */
+        }
+        .msg-dot {
+            position: absolute;
+            top: -8px;
+            right: -12px;
+            background: #ff3b30;
+            border-radius: 20px;
+            min-width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+            padding: 0 4px;
+            box-sizing: border-box;
+            z-index: 10;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.2);
+            line-height: 1;
+            pointer-events: none;
+        }
+
+        body.dark .msg-dot {
+            box-shadow: 0 0 0 1px #1e1f2a;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-bar">
+        <div class="back-btn" onclick="goTo('index.html')"><i class="fas fa-arrow-left"></i></div>
+        <div class="top-title">个人中心</div>
+        <div class="top-right" id="mineMenuBtn"><i class="fas fa-ellipsis-h"></i></div>
+    </div>
+    <div class="scroll-content" id="scrollContent">
+        <div id="skeleton">
+            <div class="profile-card" style="padding:20px;">
+                <div class="skeleton" style="width:80px;height:80px;border-radius:50%;"></div>
+                <div style="flex:1; margin-left:16px;"><div class="skeleton" style="height:20px;width:60%;margin-bottom:8px;"></div><div class="skeleton" style="height:14px;width:40%;"></div></div>
+                <div class="skeleton" style="width:120px;height:40px;"></div>
+            </div>
+            <div class="icon-menu"><div class="skeleton" style="height:60px;width:100%;"></div></div>
+            <div class="menu-group"><div class="skeleton" style="height:56px;margin:0;"></div><div class="skeleton" style="height:56px;"></div><div class="skeleton" style="height:56px;"></div><div class="skeleton" style="height:56px;"></div><div class="skeleton" style="height:56px;"></div></div>
+            <div class="logout-btn skeleton" style="height:52px;"></div>
+        </div>
+        <div id="realContent" style="display:none;"></div>
+    </div>
+    <div class="bottom-nav">
+        <div class="nav-item" data-nav="home"><i class="fas fa-home"></i><span>首页</span></div>
+        <div class="nav-item" data-nav="explore"><i class="fas fa-planet-ringed"></i><span>广场</span></div>
+        <div class="nav-item publish-btn" data-nav="publish"><i class="fas fa-plus"></i></div>
+        <div class="nav-item" data-nav="msg"><i class="far fa-comment"></i><span>消息</span><span id="msgBadge" class="msg-dot" style="display: none;">0</span></div>
+        <div class="nav-item active" data-nav="mine"><i class="far fa-user"></i><span>我的</span></div>
+    </div>
+</div>
+<!-- 通知管理模态框 -->
+<div id="notificationModal" class="modal-overlay" style="display: none;">
+    <div class="notification-modal">
+        <div class="notification-modal-header">
+            <span>通知管理</span>
+            <i class="fas fa-times" onclick="closeNotificationModal()"></i>
+        </div>
+        <div class="notification-modal-content">
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">消息通知</div>
+                    <div class="setting-desc">接收评论、点赞、关注等通知</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="msgNotifySwitch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">语音和视频通话通知</div>
+                    <div class="setting-desc">允许接收语音/视频通话邀请</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="callNotifySwitch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">通知显示内容</div>
+                    <div class="setting-desc">显示朋友和群聊的名称、头像、消息内容</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="showContentSwitch" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="followModal" class="modal-overlay">
+    <div class="follow-modal">
+        <div class="follow-modal-header"><span id="followModalTitle">我的关注</span><i class="fas fa-times" onclick="closeFollowModal()" style="cursor:pointer;"></i></div>
+        <div id="followListContainer" class="follow-list"></div>
+    </div>
+</div>
+<script src="js/common.js"></script>
+<script>
+    // ========== 关注/粉丝 API 调用（唯一版本） ==========
+    async function getUserFollowing(userId) {
+        const res = await fetch(`${API_BASE_URL}/api/follow/following?userId=${userId}`);
+        return await res.json();
+    }
+    async function getUserFollowers(userId) {
+        const res = await fetch(`${API_BASE_URL}/api/follow/followers?userId=${userId}`);
+        return await res.json();
+    }
+    async function getMutualFollows(userId) {
+        const res = await fetch(`${API_BASE_URL}/api/follow/mutual?userId=${userId}`);
+        return await res.json();
+    }
+    async function followUserApi(followerId, followeeId) {
+        const formData = new URLSearchParams();
+        formData.append('followerId', followerId);
+        formData.append('followeeId', followeeId);
+        const res = await fetch(`${API_BASE_URL}/api/follow/follow`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData
+        });
+        return await res.json();
+    }
+    async function unfollowUserApi(followerId, followeeId) {
+        const formData = new URLSearchParams();
+        formData.append('followerId', followerId);
+        formData.append('followeeId', followeeId);
+        const res = await fetch(`${API_BASE_URL}/api/follow/unfollow`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData
+        });
+        return await res.json();
+    }
+    async function isFollowingApi(followerId, followeeId) {
+        const res = await fetch(`${API_BASE_URL}/api/follow/check?followerId=${followerId}&followeeId=${followeeId}`);
+        const data = await res.json();
+        return data.isFollowing;
+    }
+
+    // ========== 存储 KEY（仅用于浏览记录和通知设置，不再存储关注） ==========
+    const STORAGE_HISTORY = "icampus_browse_history";
+    if (!localStorage.getItem(STORAGE_HISTORY)) localStorage.setItem(STORAGE_HISTORY, JSON.stringify({}));
+
+    function clearBrowseHistory() {
+        const studentId = localStorage.getItem('studentId');
+        if (studentId) {
+            const history = JSON.parse(localStorage.getItem(STORAGE_HISTORY) || '{}');
+            delete history[studentId];
+            localStorage.setItem(STORAGE_HISTORY, JSON.stringify(history));
+        }
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => { if (key.startsWith('post_view_')) localStorage.removeItem(key); });
+        showToast('缓存已清理', 'success');
+    }
+
+    // ========== 核心渲染 ==========
+    async function loadAndRender() {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) {
+            document.getElementById('skeleton').style.display = 'none';
+            document.getElementById('realContent').style.display = 'block';
+            document.getElementById('realContent').innerHTML = `
+                <div class="profile-card" style="justify-content:center;">
+                    <div style="text-align:center;"><p>请先登录</p><button class="logout-btn" onclick="goTo('login.html')" style="background:var(--primary); color:white; border:none;">去登录</button></div>
+                </div>`;
+            return;
+        }
+        let user = { nickname: studentId, bio: '', avatar: '' };
+        let stats = { postCount: 0, favoriteCount: 0, orderCount: 0 };
+        let followingCount = 0, followersCount = 0, mutualCount = 0;
+        try {
+            const [userRes, statsRes, followingRes, followersRes, mutualRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/user/info?studentId=${studentId}`).catch(()=>null),
+                fetch(`${API_BASE_URL}/api/user/stats?studentId=${studentId}`).catch(()=>null),
+                fetch(`${API_BASE_URL}/api/follow/following?userId=${studentId}`).catch(()=>null),
+                fetch(`${API_BASE_URL}/api/follow/followers?userId=${studentId}`).catch(()=>null),
+                fetch(`${API_BASE_URL}/api/follow/mutual?userId=${studentId}`).catch(()=>null)
+            ]);
+            if (userRes && userRes.ok) user = await userRes.json();
+            if (statsRes && statsRes.ok) stats = await statsRes.json();
+            if (followingRes && followingRes.ok) followingCount = (await followingRes.json()).length;
+            if (followersRes && followersRes.ok) followersCount = (await followersRes.json()).length;
+            if (mutualRes && mutualRes.ok) mutualCount = (await mutualRes.json()).length;
+        } catch(e) { console.error(e); }
+        let favoriteCount = stats.favoriteCount;
+        if (!favoriteCount) {
+            try {
+                const favRes = await fetch(`${API_BASE_URL}/api/favorite/count?studentId=${studentId}`);
+                const favData = await favRes.json();
+                favoriteCount = favData.count || 0;
+            } catch(e) { console.warn(e); }
+        }
+        const avatarHtml = user.avatar ? `<img src="${user.avatar.startsWith('http') ? user.avatar : API_BASE_URL + user.avatar}" class="avatar" onerror="this.src=''">` : `<div class="avatar-placeholder">${(user.nickname||studentId).charAt(0).toUpperCase()}</div>`;
+        const realHtml = `
+            <div class="profile-card">
+                <div class="profile-left">
+                    <div class="avatar-wrapper">${avatarHtml}</div>
+                    <div class="profile-info">
+                        <h3>${escapeHtml(user.nickname || studentId)}</h3>
+                        <div class="bio">${escapeHtml(user.bio || '📖 记录校园生活')}</div>
+                        <span class="student-id">学号: ${studentId}</span>
+                    </div>
+                </div>
+                <div class="profile-stats">
+                    <div class="stat-item" onclick="openFollowList('following')"><div class="stat-number">${followingCount}</div><div class="stat-label">关注</div></div>
+                    <div class="stat-item" onclick="openFollowList('followers')"><div class="stat-number">${followersCount}</div><div class="stat-label">粉丝</div></div>
+                    <div class="stat-item" onclick="openFollowList('mutual')"><div class="stat-number">${mutualCount}</div><div class="stat-label">互关</div></div>
+                </div>
+            </div>
+            <div class="icon-menu">
+                <div class="icon-menu-item" onclick="goTo('my-posts.html')"><i class="fas fa-file-alt"></i><span>帖子 <span class="count">${stats.postCount || 0}</span></span></div>
+                <div class="icon-menu-item" onclick="goTo('my-favorites.html')"><i class="fas fa-star"></i><span>收藏 <span class="count">${favoriteCount || 0}</span></span></div>
+                <div class="icon-menu-item" onclick="goTo('my-orders.html')"><i class="fas fa-shopping-bag"></i><span>订单 <span class="count">${stats.orderCount || 0}</span></span></div>
+            </div>
+            <div class="menu-group">
+                <div class="menu-item" onclick="goTo('edit-profile.html')"><i class="fas fa-user-edit"></i><span>编辑资料</span><i class="fas fa-chevron-right chevron"></i></div>
+                <div class="menu-item" onclick="goTo('address.html')"><i class="fas fa-map-marker-alt"></i><span>地址管理</span><i class="fas fa-chevron-right chevron"></i></div>
+                <div class="menu-item" onclick="goToHistory()"><i class="fas fa-history"></i><span>浏览记录</span><i class="fas fa-chevron-right chevron"></i></div>
+                <div class="menu-item" onclick="goToNotificationSettings()"><i class="fas fa-bell"></i><span>通知管理</span><i class="fas fa-chevron-right chevron"></i></div>
+                <div class="menu-item" onclick="clearCache()"><i class="fas fa-trash-alt"></i><span>清理缓存</span><i class="fas fa-chevron-right chevron"></i></div>
+                <div class="menu-item" onclick="deleteAccount()"><i class="fas fa-user-slash"></i><span>注销账号</span><i class="fas fa-chevron-right chevron"></i></div>
+            </div>
+            <div class="logout-btn" onclick="logout()">退出登录</div>
+        `;
+        document.getElementById('skeleton').style.display = 'none';
+        const realContainer = document.getElementById('realContent');
+        realContainer.style.display = 'block';
+        realContainer.innerHTML = realHtml;
+    }
+
+    function goToHistory() { window.location.href = 'history.html'; }
+    // 通知管理模态框
+    window.openNotificationModal = function() {
+        const modal = document.getElementById('notificationModal');
+        if (!modal) return;
+        loadNotificationSettings();
+        modal.style.display = 'flex';
+    };
+    window.closeNotificationModal = function() {
+        const modal = document.getElementById('notificationModal');
+        if (modal) modal.style.display = 'none';
+    };
+    function loadNotificationSettings() {
+        const msgNotify = localStorage.getItem('icampus_msg_notify') !== 'false';
+        const callNotify = localStorage.getItem('icampus_call_notify') !== 'false';
+        const showContent = localStorage.getItem('icampus_show_content') !== 'false';
+        document.getElementById('msgNotifySwitch').checked = msgNotify;
+        document.getElementById('callNotifySwitch').checked = callNotify;
+        document.getElementById('showContentSwitch').checked = showContent;
+    }
+    function saveNotificationSettings() {
+        const msgNotify = document.getElementById('msgNotifySwitch').checked;
+        const callNotify = document.getElementById('callNotifySwitch').checked;
+        const showContent = document.getElementById('showContentSwitch').checked;
+        localStorage.setItem('icampus_msg_notify', msgNotify);
+        localStorage.setItem('icampus_call_notify', callNotify);
+        localStorage.setItem('icampus_show_content', showContent);
+    }
+    function bindNotificationSwitches() {
+        const switches = ['msgNotifySwitch', 'callNotifySwitch', 'showContentSwitch'];
+        switches.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.removeEventListener('change', saveNotificationSettings);
+                el.addEventListener('change', saveNotificationSettings);
+            }
+        });
+    }
+    document.getElementById('notificationModal')?.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('notificationModal')) closeNotificationModal();
+    });
+    window.goToNotificationSettings = function() { openNotificationModal(); };
+    function clearCache() {
+        if (confirm('清除缓存会删除浏览记录和部分本地数据，不影响账号。确定清理吗？')) {
+            clearBrowseHistory();
+            showToast('缓存已清理', 'success');
+        }
+    }
+    async function deleteAccount() {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) {
+            showToast('未登录', 'error');
+            return;
+        }
+        if (!confirm('⚠️ 注销账号将永久删除您的所有数据（帖子、评论、收藏、订单等），且不可恢复。确定要注销吗？')) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/user/delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `studentId=${studentId}`
+            });
+            const data = await res.json();
+            if (data.success) {
+                const themeId = localStorage.getItem('icampus_theme_id');
+                const darkMode = localStorage.getItem('icampus_dark');
+                localStorage.removeItem('studentId'); localStorage.removeItem('loggedIn');
+                localStorage.clear();
+                if (themeId) localStorage.setItem('icampus_theme_id', themeId);
+                if (darkMode) localStorage.setItem('icampus_dark', darkMode);
+                showToast('账号已注销', 'success');
+                setTimeout(() => goTo('login.html'), 1500);
+            } else {
+                showToast(data.message || '注销失败', 'error');
+            }
+        } catch(e) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    // 关注/粉丝模态框
+    // 关注/粉丝模态框（支持头像显示和回关）
+    // 用户信息缓存（避免重复请求）
+    const userInfoCache = new Map();
+
+    // 获取用户信息（带缓存）
+    async function getUserInfoWithCache(userId) {
+        if (userInfoCache.has(userId)) return userInfoCache.get(userId);
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/user/info?studentId=${userId}`);
+            if (res.ok) {
+                const user = await res.json();
+                userInfoCache.set(userId, user);
+                return user;
+            }
+        } catch (e) {}
+        return { studentId: userId, nickname: userId, avatar: '' };
+    }
+
+    // 关注/粉丝模态框（增强版，支持头像和回关）
+    window.openFollowList = async function(type) {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) {
+            showToast('请先登录', 'error');
+            return;
+        }
+        console.log('打开列表:', type);
+        let list = [], title = '';
+        try {
+            if (type === 'following') {
+                list = await getUserFollowing(studentId);
+                title = '我的关注';
+            } else if (type === 'followers') {
+                list = await getUserFollowers(studentId);
+                title = '我的粉丝';
+            } else if (type === 'mutual') {
+                list = await getMutualFollows(studentId);
+                title = '互关好友';
+            }
+        } catch (e) {
+            console.error('获取列表失败', e);
+            showToast('加载失败', 'error');
+            return;
+        }
+
+        document.getElementById('followModalTitle').innerText = title;
+        const container = document.getElementById('followListContainer');
+        if (!list.length) {
+            container.innerHTML = '<div class="empty-follow">暂无数据</div>';
+            document.getElementById('followModal').style.display = 'flex';
+            return;
+        }
+
+        // 批量获取用户信息（头像、昵称）
+        const users = await Promise.all(list.map(uid => getUserInfoWithCache(uid)));
+        const userMap = new Map(users.map(u => [u.studentId, u]));
+
+        // 如果是粉丝列表，需要额外获取当前用户是否已关注对方
+        let followStatusMap = new Map();
+        if (type === 'followers') {
+            const statuses = await Promise.all(list.map(uid => isFollowingApi(studentId, uid)));
+            list.forEach((uid, idx) => followStatusMap.set(uid, statuses[idx]));
+        }
+
+        const html = list.map(uid => {
+            const user = userMap.get(uid) || { nickname: uid, avatar: '' };
+            const isFollowed = followStatusMap.get(uid) || false;
+            let buttonHtml = '';
+            if (type === 'following') {
+                buttonHtml = `<button class="unfollow-btn" onclick="unfollowFromList('${uid}')">取消关注</button>`;
+            } else if (type === 'followers') {
+                buttonHtml = isFollowed
+                    ? `<button class="unfollow-btn" onclick="unfollowFromList('${uid}')">取消关注</button>`
+                    : `<button class="follow-back-btn" onclick="followFromList('${uid}')">回关</button>`;
+            } else if (type === 'mutual') {
+                buttonHtml = `<button class="unfollow-btn" onclick="unfollowFromList('${uid}')">取消关注</button>`;
+            }
+            return `
+                <div class="follow-item">
+                    <div class="follow-avatar">
+                        ${user.avatar ? `<img src="${user.avatar.startsWith('http') ? user.avatar : API_BASE_URL + user.avatar}" style="width:100%;height:100%;object-fit:cover">` : '<i class="fas fa-user-circle"></i>'}
+                    </div>
+                    <div class="follow-info">
+                        <div class="follow-name">${escapeHtml(user.nickname || uid)}</div>
+                        <div class="follow-id">学号: ${uid}</div>
+                    </div>
+                    <div class="follow-btn-group">
+                        ${buttonHtml}
+                        <button class="chat-btn" onclick="goToChat('${uid}', '${escapeHtml(user.nickname || uid)}')">发私信</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = html;
+        document.getElementById('followModal').style.display = 'flex';
+    };
+
+    // 从列表中取消关注（用于关注、粉丝、互关）
+    window.unfollowFromList = async function(targetId) {
+        const myId = localStorage.getItem('studentId');
+        if (!myId) return;
+        const result = await unfollowUserApi(myId, targetId);
+        if (result.success) {
+            showToast('已取消关注', 'success');
+            // 刷新当前模态框
+            const currentTitle = document.getElementById('followModalTitle').innerText;
+            let type = '';
+            if (currentTitle === '我的关注') type = 'following';
+            else if (currentTitle === '我的粉丝') type = 'followers';
+            else if (currentTitle === '互关好友') type = 'mutual';
+            if (type) await openFollowList(type);
+            await loadAndRender(); // 刷新主页统计数据
+        } else {
+            showToast(result.message || '操作失败', 'error');
+        }
+    };
+
+    // 从粉丝列表中回关
+    window.followFromList = async function(targetId) {
+        const myId = localStorage.getItem('studentId');
+        if (!myId) return;
+        const result = await followUserApi(myId, targetId);
+        if (result.success) {
+            showToast('已关注', 'success');
+            // 刷新粉丝列表（重新加载，此时状态会变为“取消关注”）
+            await openFollowList('followers');
+            await loadAndRender();
+        } else {
+            showToast(result.message || '操作失败', 'error');
+        }
+    };
+
+    window.closeFollowModal = () => document.getElementById('followModal').style.display = 'none';
+    window.closeFollowModal = () => document.getElementById('followModal').style.display = 'none';
+    window.unfollowUserAction = async function(targetId) {
+        const myId = localStorage.getItem('studentId');
+        if (!myId) return;
+        const result = await unfollowUserApi(myId, targetId);
+        if (result.success) {
+            showToast('已取消关注', 'success');
+            closeFollowModal();
+            loadAndRender();
+        } else {
+            showToast(result.message || '操作失败', 'error');
+        }
+    };
+    window.goToChat = function(targetId, targetName) {
+        // 通过 URL 参数传递，避免 sessionStorage 丢失
+        window.location.href = `msg.html?tab=chat&userId=${encodeURIComponent(targetId)}&name=${encodeURIComponent(targetName)}`;
+    };
+    function logout() {
+        const themeId = localStorage.getItem('icampus_theme_id');
+        const darkMode = localStorage.getItem('icampus_dark');
+        sessionStorage.clear();
+        localStorage.clear();
+        if (themeId) localStorage.setItem('icampus_theme_id', themeId);
+        if (darkMode) localStorage.setItem('icampus_dark', darkMode);
+        showToast('已退出', 'success');
+        setTimeout(() => goTo('index.html'), 1000);
+    }
+    async function initMenu() {
+        const studentId = localStorage.getItem('studentId');
+        let isAdmin = false;
+        if (studentId) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/user/info?studentId=${studentId}`);
+                const user = await res.json();
+                isAdmin = user.role === 'ADMIN';
+            } catch(e) {}
+        }
+        const btn = document.getElementById('mineMenuBtn');
+        let dropdown = document.getElementById('mineMenuDropdown');
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.id = 'mineMenuDropdown';
+            dropdown.className = 'home-menu-dropdown';
+            dropdown.style.display = 'none';
+            dropdown.style.position = 'absolute';
+            dropdown.style.backgroundColor = 'var(--bg-card)';
+            dropdown.style.borderRadius = '20px';
+            dropdown.style.boxShadow = '0 8px 20px rgba(0,0,0,0.15)';
+            dropdown.style.padding = '8px 0';
+            dropdown.style.minWidth = '140px';
+            dropdown.style.zIndex = '9999';
+            document.body.appendChild(dropdown);
+        }
+        dropdown.innerHTML = '';
+        const about = document.createElement('div');
+        about.className = 'home-menu-item';
+        about.innerHTML = '<i class="fas fa-info-circle"></i> <span>关于我们</span>';
+        about.onclick = () => { alert('iCampus · 校园社区'); dropdown.style.display = 'none'; };
+        dropdown.appendChild(about);
+        if (isAdmin) {
+            const adminItem = document.createElement('div');
+            adminItem.className = 'home-menu-item';
+            adminItem.innerHTML = '<i class="fas fa-cogs"></i> <span>查看后台</span>';
+            adminItem.onclick = () => {
+                window.location.href = 'http://47.103.204.46/admin/';
+            };
+            dropdown.appendChild(adminItem);
+        }
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const visible = dropdown.style.display === 'block';
+            dropdown.style.display = visible ? 'none' : 'block';
+            const rect = btn.getBoundingClientRect();
+            dropdown.style.top = rect.bottom + 5 + 'px';
+            dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+        };
+        document.addEventListener('click', (e) => {
+            if (!btn.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = 'none';
+        });
+    }
+    function bindNav() {
+        const map = { home:'index.html', explore:'help.html', publish:'publish.html', msg:'msg.html', mine:'mine.html' };
+        document.querySelectorAll('.nav-item').forEach(nav => {
+            const act = nav.getAttribute('data-nav');
+            if (act && map[act]) nav.addEventListener('click', () => window.location.href = map[act]);
+        });
+    }
+    window.addEventListener('load', () => {
+        loadAndRender();
+        bindNav();
+        initMenu();
+        bindNotificationSwitches();
+        if (typeof updateMsgBadge === 'function') updateMsgBadge();
+    });
+</script>
+</body>
+</html>

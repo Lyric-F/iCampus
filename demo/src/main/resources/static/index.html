@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>iCampus · 灵感社区</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <style>
+        /* ========== 完整样式 ========== */
+        :root {
+            --primary: #007aff;
+            --primary-light: #3a8eff;
+            --glow-primary: rgba(0, 122, 255, 0.2);
+            --title-dark: #1c1c1e;
+            --text-dark: #1c1c1e;
+            --text-muted: #8e8e93;
+            --text-placeholder: #aeaeb2;
+            --icon-color: #007aff;
+            --badge-bg: #e9f0fe;
+            --cate-active-bg: #007aff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; transition: background 0.2s ease, color 0.2s ease; padding-bottom: 80px; color: #121826; background: #fafcff; }
+        body.dark { background: #0a0c15; color: #eff3fc; }
+        body.dark .card, body.dark .func-card, body.dark .hot-section, body.dark .search-container,
+        body.dark .category-row, body.dark .search-history-panel, body.dark .bottom-nav, body.dark .theme-modal {
+            background: #13182a; border-color: #2c2e3a; box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+        }
+        body.dark .search-container, body.dark .func-card, body.dark .hot-section, body.dark .category-row, body.dark .card {
+            box-shadow: none; border: 1px solid #2c2e3a;
+        }
+        body.dark .post-desc, body.dark .time-text, body.dark .author { color: #b3c0e5; }
+        body.dark .cate-btn { background: #1e253e; color: #b6c2f0; }
+        body.dark .cate-btn.active { background: var(--cate-active-bg, #6c5ce7); color: white; }
+        body.dark .search-input { color: white; }
+        body.dark .type-badge { background: #2c2e3a; color: #a58eff; }
+        body.dark .theme-modal .theme-option:hover { background: #2c2e3a; }
+        body.dark .hot-header span,
+        body.dark .func-card span,
+        body.dark .cate-btn,
+        body.dark .top-title,
+        body.dark .greeting p,
+        body.dark .nav-item span,
+        body.dark .nav-item i,
+        body.dark .post-title,
+        body.dark .post-desc,
+        body.dark .type-badge {
+            color: #eef3fc !important;
+        }
+        body.dark .cate-btn.active { color: white !important; }
+        body.dark .func-card span { color: #eef3fc !important; }
+        body.dark #menuDropdown {
+            background: #1e253e !important;
+            border: 1px solid #3a405a !important;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
+        }
+        body.dark #menuDropdown .menu-item,
+        body.dark #menuDropdown div[style*="padding"] {
+            color: #eef3fc !important;
+            border-top-color: #3a405a !important;
+        }
+        body.dark #menuDropdown i { color: #8a9bff !important; }
+        body.dark #menuDropdown div:hover { background: #2c2e42 !important; }
+        .app-container { max-width: 540px; margin: 0 auto; position: relative; }
+        .hero-row { display: flex; align-items: center; gap: 8px; padding: 16px 12px 12px; }
+        .greeting { flex-shrink: 0; line-height: 1.2; transition: opacity 0.2s ease, visibility 0.2s ease, width 0.2s ease; white-space: nowrap; overflow: hidden; }
+        .greeting h1 { font-size: 1.65rem; font-weight: 800; letter-spacing: -0.3px; background: linear-gradient(135deg, var(--title-dark), var(--primary), var(--primary-light)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .greeting p { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+        .search-wrapper { flex: 1; position: relative; transition: flex 0.25s ease; min-width: 0; }
+        .search-container { background: white; border-radius: 44px; padding: 6px 12px; display: flex; align-items: center; gap: 8px; border: 1px solid #eef2f6; transition: border 0.2s, box-shadow 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .search-container:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px var(--glow-primary); }
+        .search-container i:first-child { color: var(--primary); font-size: 0.9rem; }
+        .search-input { flex: 1; border: none; outline: none; background: transparent; font-size: 0.85rem; font-weight: 500; padding: 8px 0; color: #1c1c1e; min-width: 0; }
+        .search-input::placeholder { color: var(--text-placeholder); }
+        #clearSearch { cursor: pointer; color: #8e8e93; font-size: 0.8rem; display: none; }
+        .icon-group { display: flex; gap: 8px; flex-shrink: 0; }
+        .icon-btn { width: 36px; height: 36px; background: #f5f5f7; border-radius: 30px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; transition: all 0.2s; border: 1px solid #eef2f6; color: var(--primary); }
+        .icon-btn:active { transform: scale(0.92); background: #ffffff; }
+        .hero-row.search-focused .greeting { opacity: 0; visibility: hidden; width: 0; margin: 0; }
+        .hero-row.search-focused .search-wrapper { flex: 1 1 100%; }
+        .search-history-panel { position: absolute; top: 52px; left: 0; right: 0; background: white; border-radius: 28px; padding: 12px 0; box-shadow: 0 20px 35px rgba(0,0,0,0.08); border: 1px solid #eef2f6; z-index: 120; display: none; }
+        .history-header { display: flex; justify-content: space-between; padding: 6px 20px 10px; font-size: 0.75rem; font-weight: 600; color: #5b5f77; }
+        .history-clear { color: var(--primary); cursor: pointer; }
+        .history-list { padding: 0 12px; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; cursor: pointer; border-radius: 20px; transition: background 0.1s; }
+        .history-item:hover { background: #f0f2fa; }
+        .hot-section { background: white; margin: 8px 16px 20px; border-radius: 32px; padding: 10px 16px; border: 1px solid #eef2f6; box-shadow: 0 2px 8px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 12px; }
+        .hot-header { display: flex; align-items: baseline; gap: 6px; flex-shrink: 0; }
+        .hot-header i { color: #ff7a45; font-size: 1rem; }
+        .hot-header span { font-weight: 800; font-size: 0.85rem; color: #1c1c1e; }
+        .hot-marquee { flex: 1; position: relative; height: 56px; overflow: hidden; }
+        .hot-marquee-track { display: flex; flex-direction: column; gap: 8px; animation: scrollUp 12s linear infinite; }
+        .hot-marquee:hover .hot-marquee-track { animation-play-state: paused; }
+        .hot-item { display: flex; align-items: center; gap: 8px; padding: 4px 8px; background: #f5f5f7; border-radius: 40px; cursor: pointer; transition: all 0.2s; border: 1px solid #eef2f6; font-size: 0.75rem; }
+        .hot-item:active { transform: scale(0.98); background: #eef2f6; }
+        .rank-badge { background: #ffd966; width: 22px; height: 22px; border-radius: 30px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: #a75800; flex-shrink: 0; }
+        .hot-title { flex: 1; font-weight: 500; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        @keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(calc(-100% - 8px)); } }
+        .func-grid-modern { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 12px 16px 24px; }
+        .func-card { background: white; border-radius: 28px; padding: 12px 4px; text-align: center; transition: all 0.2s; cursor: pointer; border: 1px solid #eef2f6; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .func-card:active { transform: scale(0.94); }
+        .func-icon { font-size: 1.8rem; margin-bottom: 6px; background: linear-gradient(145deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .func-card span { font-size: 0.7rem; font-weight: 600; color: #1c1c1e; }
+        .category-row { display: flex; gap: 12px; background: #ffffff; padding: 4px; border-radius: 60px; margin: 0 16px 24px; border: 1px solid #eef2f6; }
+        .cate-btn { flex: 1; text-align: center; padding: 10px 0; border-radius: 50px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: 0.2s; background: #f5f5f7; color: var(--text-muted); border: none; }
+        .cate-btn.active { background: var(--cate-active-bg, var(--primary)); color: white; box-shadow: 0 4px 12px var(--glow-primary); }
+        .feed-list { padding: 10px 16px 30px; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: white; border-radius: 36px; padding: 20px; transition: all 0.2s ease; border: 1px solid #eef2f6; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .card:active { transform: scale(0.98); background: #fefefe; }
+        .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .type-badge { background: var(--badge-bg); padding: 5px 14px; border-radius: 60px; font-size: 0.7rem; font-weight: 700; color: var(--primary); }
+        .time-text { font-size: 0.65rem; color: #8b8faa; }
+        .post-title { font-size: 1.2rem; font-weight: 800; margin: 8px 0 6px; line-height: 1.3; color: #1c1c1e; }
+        .post-desc { font-size: 0.85rem; color: #5c6072; line-height: 1.45; margin-bottom: 16px; }
+        .post-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+        .author { font-size: 0.7rem; font-weight: 500; display: flex; align-items: center; gap: 6px; color: #8b8faa; }
+        .interactions { display: flex; gap: 18px; }
+        .interactions span { font-size: 0.7rem; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: 0.1s; color: #8b8faa; }
+        .liked { color: #ff5277; }
+        .view-count { font-size: 0.7rem; display: inline-flex; align-items: center; gap: 5px; color: #8b8faa; }
+        .empty-state { text-align: center; padding: 48px 20px; color: #9ca3af; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 540px; margin: 0 auto; background: white; display: flex; justify-content: space-around; padding: 10px 20px 24px; border-top: 1px solid #eef2f6; z-index: 99; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.7rem; color: #9095ae; cursor: pointer; transition: 0.2s; }
+        .nav-item i { font-size: 1.35rem; }
+        .nav-item.active { color: var(--primary); font-weight: 600; }
+        .publish-btn { background: var(--primary); width: 52px; height: 52px; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin-top: -20px; box-shadow: 0 6px 16px var(--glow-primary); color: white; font-size: 1.4rem; }
+        .nav-item[data-nav="msg"] { position: relative; }
+        .msg-dot { position: absolute; top: -8px; right: -12px; background: #ff3b30; border-radius: 20px; min-width: 18px; height: 18px; display: none; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: white; padding: 0 4px; box-sizing: border-box; z-index: 10; box-shadow: 0 0 0 1px rgba(255,255,255,0.2); line-height: 1; pointer-events: none; }
+        body.dark .msg-dot { box-shadow: 0 0 0 1px #1e1f2a; }
+        .theme-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; }
+        .theme-modal { width: 320px; max-width: 85%; background: white; border-radius: 40px; padding: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.3); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-weight: 700; font-size: 1.2rem; }
+        .modal-header i { cursor: pointer; font-size: 1.2rem; color: #8e8e93; }
+        .modal-tabs { display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid #eef2f6; padding-bottom: 8px; }
+        .modal-tab { flex: 1; text-align: center; padding: 8px 0; font-weight: 600; cursor: pointer; color: #8e8e93; border-radius: 30px; transition: 0.2s; }
+        .modal-tab.active { color: var(--primary); background: var(--badge-bg); }
+        .theme-list { display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; }
+        .theme-option { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 28px; cursor: pointer; transition: 0.1s; border: 1px solid #eef2f6; }
+        .theme-option:hover { background: #f5f5f7; }
+        .theme-color-preview { width: 36px; height: 36px; border-radius: 36px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .theme-info { flex: 1; }
+        .theme-name { font-weight: 600; font-size: 0.9rem; }
+        .theme-desc { font-size: 0.7rem; color: #8e8e93; }
+        .theme-check { color: var(--primary); font-size: 1.2rem; opacity: 0; }
+        .theme-option.selected .theme-check { opacity: 1; }
+        .close-modal { cursor: pointer; }
+        .post-images { display: flex; gap: 8px; margin: 12px 0; overflow-x: auto; scrollbar-width: thin; }
+        .post-image-item { flex-shrink: 0; width: 100px; height: 100px; border-radius: 12px; overflow: hidden; background: #f0f0f0; }
+        .post-image-item img { width: 100%; height: 100%; object-fit: cover; }
+        .image-count-badge { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 100px; height: 100px; background: rgba(0,0,0,0.6); color: white; font-size: 24px; font-weight: bold; border-radius: 12px; }
+        .detail-images { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0; }
+        .detail-image-item { aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; background: #f0f0f0; }
+        .detail-image-item img { width: 100%; height: 100%; object-fit: cover; }
+        body.dark .post-image-item, body.dark .detail-image-item { background: #2c2e3a; }
+        .post-content-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; white-space: normal; font-size: 14px; line-height: 1.5; margin: 8px 0 4px; color: #1c1c1e; }
+        .post-content-text.expanded { display: block; -webkit-line-clamp: unset; }
+        .toggle-content-btn { color: #0071e3; font-size: 13px; cursor: pointer; margin: 4px 0 8px; display: inline-block; }
+        body.dark .post-content-text { color: #e2e8f0; }
+        .post-title.special-title { font-size: 1.4rem; font-weight: 800; margin: 8px 0 12px; line-height: 1.3; color: #1c1c1e; }
+        body.dark .post-title.special-title { color: #f5f5f7; }
+        .bottom-nav .nav-item.active i,
+        .bottom-nav .nav-item.active .fas,
+        .bottom-nav .nav-item.active .far,
+        .bottom-nav .nav-item.active .fa-home {
+            color: var(--primary) !important;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="hero-row" id="heroRow">
+        <div class="greeting">
+            <h1>iCampus</h1>
+            <p>灵感共生 · 无界校园</p>
+        </div>
+        <div class="search-wrapper">
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" class="search-input" id="searchInput" placeholder="搜公告、活动、热词..." autocomplete="off">
+                <i class="fas fa-times" id="clearSearch"></i>
+            </div>
+            <div id="searchHistoryPanel" class="search-history-panel">
+                <div class="history-header">
+                    <span>最近搜索</span>
+                    <span class="history-clear" id="clearHistoryBtn">清空记录</span>
+                </div>
+                <div class="history-list" id="historyList"></div>
+            </div>
+        </div>
+        <div class="icon-group">
+            <div class="icon-btn" id="menuBtn"><i class="fas fa-feather-alt"></i></div>
+            <div class="icon-btn" id="scanBtn"><i class="fas fa-qrcode"></i></div>
+        </div>
+    </div>
+
+    <div class="hot-section">
+        <div class="hot-header">
+            <i class="fas fa-chart-line"></i>
+            <span>热榜·此刻</span>
+        </div>
+        <div class="hot-marquee" id="hotMarquee">
+            <div class="hot-marquee-track" id="hotTrack"></div>
+        </div>
+    </div>
+
+    <div class="func-grid-modern">
+        <div class="func-card" data-url="print.html"><div class="func-icon"><i class="fas fa-print"></i></div><span>即刻打印</span></div>
+        <div class="func-card" data-url="job.html"><div class="func-icon"><i class="fas fa-briefcase"></i></div><span>校园兼职</span></div>
+        <div class="func-card" data-url="run.html"><div class="func-icon"><i class="fas fa-person-running"></i></div><span>跑腿生活</span></div>
+        <div class="func-card" data-url="canteen.html"><div class="func-icon"><i class="fas fa-utensils"></i></div><span>食堂点餐</span></div>
+    </div>
+
+    <div class="category-row">
+        <div class="cate-btn active" data-cate="校园公告">📢 校园公告</div>
+        <div class="cate-btn" data-cate="活动报名">✨ 活动报名</div>
+    </div>
+
+    <div class="feed-list" id="feedList"><div class="empty-state">加载中...</div></div>
+
+    <div class="bottom-nav">
+        <div class="nav-item" data-nav="home"><i class="fas fa-home"></i><span>首页</span></div>
+        <div class="nav-item" data-nav="explore"><i class="fas fa-planet-ringed"></i><span>广场</span></div>
+        <div class="nav-item publish-btn" data-nav="publish"><i class="fas fa-plus"></i></div>
+        <div class="nav-item" data-nav="msg">
+            <i class="far fa-comment"></i>
+            <span>消息</span>
+            <span id="msgBadge" class="msg-dot" style="display: none;">0</span>
+        </div>
+        <div class="nav-item" data-nav="mine"><i class="far fa-user"></i><span>我的</span></div>
+    </div>
+</div>
+
+<div id="themeModal" class="theme-modal-overlay">
+    <div class="theme-modal">
+        <div class="modal-header">
+            <span>个性化主题</span>
+            <i class="fas fa-times close-modal"></i>
+        </div>
+        <div class="modal-tabs">
+            <div class="modal-tab active" data-tab="theme">主题选择</div>
+            <div class="modal-tab" data-tab="solid">纯色模式</div>
+        </div>
+        <div id="themeListContainer" class="theme-list"></div>
+    </div>
+</div>
+
+<div id="menuDropdown" style="position: fixed; top: 75px; right: 24px; background: white; border-radius: 26px; padding: 8px 0; min-width: 150px; box-shadow: 0 20px 35px rgba(0,0,0,0.2); z-index: 150; display: none;">
+    <div id="personalizeThemeBtn" style="padding: 12px 20px; display: flex; gap: 12px; align-items: center; cursor: pointer;"><i class="fas fa-palette"></i> <span>个性化主题</span></div>
+    <div id="nightModeToggle" style="padding: 12px 20px; display: flex; gap: 12px; align-items: center; cursor: pointer; border-top: 1px solid #eef2f6;"><i class="fas fa-moon"></i> <span>夜间模式</span></div>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+    // ========== 全局变量 ==========
+    let currentPosts = [];
+    let searchHistory = [];
+    let currentCategory = "校园公告";
+    let localSearchKeyword = "";
+    let isPlusReady = false;
+    let isScanning = false;
+
+    // ========== 全局辅助函数 ==========
+    function showToast(msg, type) {
+        if (typeof plus !== 'undefined') {
+            plus.nativeUI.toast(msg);
+        } else {
+            alert(msg);
+        }
+        console.log(`[${type}] ${msg}`);
+    }
+
+    function goTo(url) {
+        if (!url) return;
+        window.location.href = url;
+    }
+
+    function goToPostDetail(postId) {
+        window.location.href = `post-detail.html?postId=${postId}`;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+    }
+
+    function formatRelativeTime(isoString) {
+        if (!isoString) return '';
+        const now = new Date();
+        const target = new Date(isoString);
+        const diffSeconds = Math.floor((now - target) / 1000);
+        if (diffSeconds < 0) return '刚刚';
+        if (diffSeconds < 60) return `${diffSeconds}秒前`;
+        if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}分钟前`;
+        if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}小时前`;
+        if (diffSeconds < 2592000) return `${Math.floor(diffSeconds / 86400)}天前`;
+        return target.toLocaleDateString();
+    }
+
+    function getPostViewCount(post) {
+        if (post.viewCount && post.viewCount > 0) return post.viewCount;
+        const key = `post_view_${post.id}`;
+        let views = localStorage.getItem(key);
+        if (!views) {
+            views = Math.floor(Math.random() * 1900) + 100;
+            localStorage.setItem(key, views);
+        }
+        return parseInt(views);
+    }
+
+    async function fetchPostsFromAPI() {
+        const studentId = localStorage.getItem('studentId') || '';
+        const url = `/api/post/list?studentId=${studentId}`;
+        try {
+            const res = await fetch(API_BASE_URL + url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const posts = await res.json();
+            return posts.map(p => ({
+                id: p.id,
+                type: p.type,
+                title: p.title,
+                content: p.content,
+                author: p.nickname || p.studentId,
+                createTime: p.createTime,
+                likeCount: p.likeCount || 0,
+                commentCount: p.commentCount || 0,
+                userLiked: p.userLiked || false,
+                viewCount: p.viewCount || 0,
+                imageList: p.imageList || []
+            }));
+        } catch (e) {
+            console.error('加载帖子失败:', e);
+            return [];
+        }
+    }
+
+    function renderFeed() {
+        let filtered = [...currentPosts];
+        if (currentCategory !== "全部") filtered = filtered.filter(p => p.type === currentCategory);
+        if (localSearchKeyword.trim()) filtered = filtered.filter(p => p.title.includes(localSearchKeyword) || p.content.includes(localSearchKeyword));
+        const container = document.getElementById("feedList");
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="empty-state"><i class="fas fa-compass" style="font-size: 2rem; opacity: 0.5;"></i><p>没有找到相关动态<br>试试其他关键词～</p></div>`;
+            return;
+        }
+        container.innerHTML = filtered.map(post => {
+            const isSpecial = (post.type === "校园公告" || post.type === "活动报名");
+            let viewCount = 0;
+            if (isSpecial) viewCount = getPostViewCount(post.id);
+
+            const contentText = escapeHtml(post.content);
+            const contentId = `content-${post.id}`;
+            const toggleBtnId = `toggle-${post.id}`;
+            const needToggle = post.content.length > 100;
+            const toggleBtnHtml = needToggle ? `<div id="${toggleBtnId}" class="toggle-content-btn" data-id="${post.id}" onclick="event.stopPropagation(); toggleContent('${contentId}', '${toggleBtnId}')">展开全文</div>` : '';
+
+            let imagesHtml = '';
+            if (post.imageList && post.imageList.length) {
+                const displayImages = post.imageList.slice(0, 3);
+                const remaining = post.imageList.length - 3;
+                imagesHtml = `<div class="post-images">`;
+                displayImages.forEach(url => {
+                    const fullUrl = url.startsWith('http') ? url : API_BASE_URL + url;
+                    imagesHtml += `<div class="post-image-item"><img src="${fullUrl}" loading="lazy"></div>`;
+                });
+                if (remaining > 0) {
+                    imagesHtml += `<div class="post-image-item image-count-badge">+${remaining}</div>`;
+                }
+                imagesHtml += `</div>`;
+            }
+
+            const interactionsHtml = isSpecial ?
+                `<div class="interactions"><span class="view-count"><i class="fas fa-eye"></i> ${viewCount}</span></div>` :
+                `<div class="interactions">
+                <span class="like-action" data-id="${post.id}">
+                    <i class="${post.userLiked ? 'fas fa-heart liked' : 'far fa-heart'}"></i> <span class="like-count">${post.likeCount}</span>
+                </span>
+                <span><i class="far fa-comment"></i> ${post.commentCount}</span>
+            </div>`;
+
+            const titleHtml = isSpecial ? `<div class="post-title special-title">${escapeHtml(post.title)}</div>` : '';
+            const contentHtml = !isSpecial ? `
+            <div class="post-content-text" id="${contentId}">${contentText}</div>
+            ${toggleBtnHtml}
+        ` : '';
+
+            return `
+            <div class="card" data-id="${post.id}" onclick="goToPostDetail(${post.id})">
+                <div class="card-top">
+                    <span class="type-badge">${post.type}</span>
+                    <span class="time-text">${formatRelativeTime(post.createTime)}</span>
+                </div>
+                ${titleHtml}
+                ${contentHtml}
+                ${imagesHtml}
+                <div class="post-footer">
+                    <div class="author"><i class="far fa-user-circle"></i> ${escapeHtml(post.author)}</div>
+                    ${interactionsHtml}
+                </div>
+            </div>
+        `;
+        }).join('');
+
+        document.querySelectorAll('.like-action').forEach(el => {
+            el.removeEventListener('click', handleLike);
+            el.addEventListener('click', handleLike);
+        });
+    }
+
+    window.toggleContent = function(contentId, toggleBtnId) {
+        const contentDiv = document.getElementById(contentId);
+        const btn = document.getElementById(toggleBtnId);
+        if (!contentDiv || !btn) return;
+        const isExpanded = contentDiv.classList.contains('expanded');
+        if (isExpanded) {
+            contentDiv.classList.remove('expanded');
+            btn.innerText = '展开全文';
+        } else {
+            contentDiv.classList.add('expanded');
+            btn.innerText = '收起';
+        }
+    };
+
+    function renderHotMarquee() {
+        if (!currentPosts.length) return;
+        const hotPosts = [...currentPosts]
+            .sort((a, b) => (b.likeCount + b.commentCount) - (a.likeCount + a.commentCount))
+            .slice(0, 6);
+        const track = document.getElementById('hotTrack');
+        if (!track) return;
+        const items = [...hotPosts, ...hotPosts];
+        track.innerHTML = items.map((post, idx) => `
+            <div class="hot-item" data-post-id="${post.id}">
+                <span class="rank-badge">${(idx % hotPosts.length) + 1}</span>
+                <span class="hot-title">${escapeHtml(post.title.length > 24 ? post.title.slice(0,24)+'…' : post.title)}</span>
+            </div>
+        `).join('');
+        document.querySelectorAll('.hot-item').forEach(item => {
+            item.removeEventListener('click', handleHotItemClick);
+            item.addEventListener('click', handleHotItemClick);
+        });
+    }
+
+    function handleHotItemClick(e) {
+        e.stopPropagation();
+        const postId = parseInt(this.dataset.postId);
+        if (postId) goToPostDetail(postId);
+    }
+
+    async function handleLike(e) {
+        e.stopPropagation();
+        const id = parseInt(e.currentTarget.dataset.id);
+        const post = currentPosts.find(p => p.id === id);
+        if (!post || post.type === '校园公告' || post.type === '活动报名') return;
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) { showToast('请先登录', 'error'); return; }
+        try {
+            const res = await fetch(API_BASE_URL + '/api/post/like', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `studentId=${studentId}&postId=${id}`
+            });
+            const data = await res.json();
+            if (data.success) {
+                post.userLiked = data.liked;
+                post.likeCount = data.likeCount;
+                renderFeed();
+                renderHotMarquee();
+            } else {
+                showToast(data.message || '操作失败', 'error');
+            }
+        } catch(e) { showToast('网络错误', 'error'); }
+    }
+
+    // ========== 搜索历史 ==========
+    function saveToLocal() {
+        localStorage.setItem("icampus_search_history_v2", JSON.stringify(searchHistory));
+    }
+    function loadLocalData() {
+        const storedHistory = localStorage.getItem("icampus_search_history_v2");
+        if (storedHistory) searchHistory = JSON.parse(storedHistory);
+        else searchHistory = [];
+    }
+    function addSearchHistory(keyword) {
+        if (!keyword.trim()) return;
+        searchHistory = searchHistory.filter(h => h !== keyword);
+        searchHistory.unshift(keyword);
+        if (searchHistory.length > 8) searchHistory.pop();
+        saveToLocal();
+        renderHistoryList();
+    }
+    function renderHistoryList() {
+        const container = document.getElementById("historyList");
+        if (!container) return;
+        if (searchHistory.length === 0) {
+            container.innerHTML = "<div style='padding:12px; text-align:center; color:#aaa'>暂无搜索记录</div>";
+            return;
+        }
+        container.innerHTML = searchHistory.map(h => `
+            <div class="history-item" data-word="${escapeHtml(h)}">
+                <span><i class="fas fa-history" style="margin-right: 12px; opacity:0.7;"></i>${escapeHtml(h)}</span>
+                <i class="fas fa-trash-alt" style="opacity:0.5; font-size:12px;" data-word="${escapeHtml(h)}"></i>
+            </div>
+        `).join('');
+        document.querySelectorAll('.history-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (e.target.classList.contains('fa-trash-alt')) {
+                    const word = e.target.dataset.word;
+                    searchHistory = searchHistory.filter(w => w !== word);
+                    saveToLocal();
+                    renderHistoryList();
+                    e.stopPropagation();
+                } else {
+                    const word = item.dataset.word;
+                    document.getElementById("searchInput").value = word;
+                    localSearchKeyword = word;
+                    renderFeed();
+                    hideHistoryPanel();
+                }
+            });
+        });
+    }
+    function showHistoryPanel() { if (searchHistory.length) document.getElementById("searchHistoryPanel").style.display = "block"; }
+    function hideHistoryPanel() { document.getElementById("searchHistoryPanel").style.display = "none"; }
+
+    function bindSearch() {
+        const input = document.getElementById("searchInput");
+        const clearBtn = document.getElementById("clearSearch");
+        input.addEventListener("focus", () => showHistoryPanel());
+        input.addEventListener("input", (e) => {
+            const val = e.target.value;
+            localSearchKeyword = val;
+            clearBtn.style.display = val ? "block" : "none";
+            renderFeed();
+            if (val === "") hideHistoryPanel();
+            else showHistoryPanel();
+        });
+        clearBtn.addEventListener("click", () => {
+            input.value = "";
+            localSearchKeyword = "";
+            renderFeed();
+            clearBtn.style.display = "none";
+            hideHistoryPanel();
+        });
+        document.addEventListener("click", (e) => {
+            if (!e.target.closest(".search-wrapper")) hideHistoryPanel();
+        });
+        document.getElementById("clearHistoryBtn").addEventListener("click", () => {
+            searchHistory = [];
+            saveToLocal();
+            renderHistoryList();
+            hideHistoryPanel();
+        });
+    }
+
+    function initCategory() {
+        document.querySelectorAll(".cate-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".cate-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentCategory = btn.dataset.cate;
+                localSearchKeyword = "";
+                document.getElementById("searchInput").value = "";
+                document.getElementById("clearSearch").style.display = "none";
+                renderFeed();
+                hideHistoryPanel();
+            });
+        });
+    }
+
+    function initSearchFocusToggle() {
+        const heroRow = document.getElementById('heroRow');
+        const searchInput = document.getElementById('searchInput');
+        if (!heroRow || !searchInput) return;
+        searchInput.addEventListener('focus', () => heroRow.classList.add('search-focused'));
+        searchInput.addEventListener('blur', () => setTimeout(() => heroRow.classList.remove('search-focused'), 150));
+    }
+
+    // ========== 拍照扫码（唯一方式） ==========
+    let cameraInstance = null;
+
+    function captureAndDecode() {
+        if (isScanning) {
+            showToast('正在处理中，请稍后', 'info');
+            return;
+        }
+        isScanning = true;
+        showToast('启动相机拍照...', 'info');
+
+        if (!cameraInstance) {
+            cameraInstance = plus.camera.getCamera();
+        }
+        cameraInstance.captureImage(
+            (captureFile) => {
+                console.log('拍照成功，路径：', captureFile);
+                decodeQRFromImage(captureFile);
+            },
+            (error) => {
+                isScanning = false;
+                console.error('拍照失败：', error);
+                showToast('拍照失败：' + (error.message || '未知错误'), 'error');
+            },
+            { filename: '_doc/qrcode_temp.jpg', index: 0 }
+        );
+    }
+
+    function decodeQRFromImage(imagePath) {
+        plus.io.resolveLocalFileSystemURL(imagePath, (entry) => {
+            entry.file((file) => {
+                const reader = new plus.io.FileReader();
+                reader.onloadend = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                            inversionAttempts: "dontInvert",
+                        });
+                        if (code && code.data && code.data.trim() !== "") {
+                            const result = code.data.trim();
+                            console.log('解码结果：', result);
+                            showToast('扫描成功', 'success');
+                            // 跳转处理：优先使用 plus.runtime.openURL，失败则回退 window.location.href
+                            if (result.startsWith('http://') || result.startsWith('https://')) {
+                                try {
+                                    plus.runtime.openURL(result, (error) => {
+                                        if (error) {
+                                            console.error('plus.runtime.openURL 失败，回退 window.location.href', error);
+                                            window.location.href = result;
+                                        }
+                                    });
+                                } catch (err) {
+                                    console.error('调用 plus.runtime.openURL 异常，回退 window.location.href', err);
+                                    window.location.href = result;
+                                }
+                            } else {
+                                showToast('扫描结果：' + result, 'info');
+                            }
+                        } else {
+                            console.warn('未识别到有效二维码数据', code);
+                            showToast('未识别到二维码，请调整角度重试', 'error');
+                        }
+                        isScanning = false;
+                        // 删除临时文件
+                        entry.remove(() => {}, (e) => console.warn('删除临时文件失败', e));
+                    };
+                    img.onerror = (err) => {
+                        console.error('图片加载失败', err);
+                        showToast('图片加载失败，请重试', 'error');
+                        isScanning = false;
+                    };
+                    img.src = e.target.result; // DataURL
+                };
+                reader.readAsDataURL(file);
+            }, (err) => {
+                console.error('读取文件失败', err);
+                showToast('读取图片失败', 'error');
+                isScanning = false;
+            });
+        }, (err) => {
+            console.error('解析文件路径失败', err);
+            showToast('图片路径无效', 'error');
+            isScanning = false;
+        });
+    }
+
+    function startScan() {
+        if (typeof window.plus === 'undefined') {
+            showToast('非 App 环境，无法扫码', 'error');
+            return;
+        }
+        if (!isPlusReady) {
+            showToast('扫码功能初始化中，请稍后再试', 'error');
+            return;
+        }
+        if (isScanning) {
+            showToast('正在扫码中，请稍后', 'info');
+            return;
+        }
+        captureAndDecode(); // 直接拍照解码，不再尝试原生扫码
+    }
+
+    // ========== 全局交互绑定 ==========
+    function bindGlobalFeatures() {
+        document.querySelectorAll(".func-card").forEach(card => {
+            const url = card.getAttribute("data-url");
+            if (url) card.addEventListener("click", (e) => { e.stopPropagation(); goTo(url); });
+        });
+
+        const navMap = {
+            home: 'index.html',
+            explore: 'help.html',
+            publish: 'publish.html',
+            msg: 'msg.html',
+            mine: 'mine.html'
+        };
+        document.querySelectorAll(".nav-item").forEach(nav => {
+            const action = nav.dataset.nav;
+            if (action && navMap[action]) nav.addEventListener("click", (e) => { e.stopPropagation(); goTo(navMap[action]); });
+        });
+
+        const scanBtn = document.getElementById("scanBtn");
+        if (scanBtn) {
+            scanBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                startScan();
+            });
+        }
+    }
+
+    // ========== 主题交互 ==========
+    function renderThemeList() {
+        const container = document.getElementById('themeListContainer');
+        if (!container) return;
+        const activeTab = document.querySelector('.modal-tab.active').dataset.tab;
+        let themesList = [];
+        if (activeTab === 'theme') {
+            themesList = Object.entries(window.themeThemes || {}).map(([id, t]) => ({ id, ...t, type: 'theme' }));
+        } else {
+            themesList = Object.entries(window.solidThemes || {}).map(([id, t]) => ({ id, ...t, type: 'solid' }));
+        }
+        container.innerHTML = themesList.map(theme => `
+            <div class="theme-option ${window.currentThemeId === theme.id && window.currentThemeType === theme.type ? 'selected' : ''}" data-id="${theme.id}" data-type="${theme.type}">
+                <div class="theme-color-preview" style="background: ${theme.primary};"></div>
+                <div class="theme-info">
+                    <div class="theme-name">${theme.name}</div>
+                    <div class="theme-desc">${theme.desc}</div>
+                </div>
+                <i class="fas fa-check-circle theme-check"></i>
+            </div>
+        `).join('');
+        document.querySelectorAll('.theme-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                const id = opt.dataset.id;
+                const type = opt.dataset.type;
+                if (typeof window.setTheme === 'function') {
+                    window.setTheme(id, type);
+                }
+                document.getElementById('themeModal').style.display = 'none';
+            });
+        });
+    }
+
+    function initMenuAndModal() {
+        const menuBtn = document.getElementById('menuBtn');
+        const dropdown = document.getElementById('menuDropdown');
+        const personalizeBtn = document.getElementById('personalizeThemeBtn');
+        const nightToggle = document.getElementById('nightModeToggle');
+        const modal = document.getElementById('themeModal');
+        const closeModal = document.querySelector('.close-modal');
+        const modalTabs = document.querySelectorAll('.modal-tab');
+
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        });
+        document.addEventListener('click', () => { dropdown.style.display = 'none'; });
+
+        personalizeBtn.addEventListener('click', () => {
+            dropdown.style.display = 'none';
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => {
+                renderThemeList();
+            });
+        });
+        nightToggle.addEventListener('click', () => {
+            if (typeof window.setDarkMode === 'function') {
+                window.setDarkMode(!window.darkMode);
+            }
+            dropdown.style.display = 'none';
+        });
+        closeModal.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.style.display = 'none';
+        });
+        modalTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                modalTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                requestAnimationFrame(() => {
+                    renderThemeList();
+                });
+            });
+        });
+    }
+
+    function syncNightModeButton() {
+        const nightToggle = document.getElementById('nightModeToggle');
+        if (nightToggle) {
+            const isDark = document.body.classList.contains('dark');
+            const icon = nightToggle.querySelector('i');
+            const span = nightToggle.querySelector('span');
+            if (icon) icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            if (span) span.innerText = isDark ? '日间模式' : '夜间模式';
+        }
+    }
+
+    // ========== 应用启动 ==========
+    async function startApp() {
+        loadLocalData();
+        bindSearch();
+        initCategory();
+        bindGlobalFeatures();
+        initMenuAndModal();
+        initSearchFocusToggle();
+        syncNightModeButton();
+
+        const observer = new MutationObserver(() => syncNightModeButton());
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+        currentPosts = await fetchPostsFromAPI();
+        renderFeed();
+        renderHotMarquee();
+        renderHistoryList();
+
+        if (typeof updateMsgBadge === 'function') updateMsgBadge();
+        window.addEventListener('pageshow', () => {
+            if (typeof updateMsgBadge === 'function') updateMsgBadge();
+        });
+
+        const homeNav = document.querySelector('.nav-item[data-nav="home"]');
+        if (homeNav) homeNav.classList.add('active');
+    }
+
+    document.addEventListener('plusready', function() {
+        isPlusReady = true;
+        console.log('HTML5+ 环境已就绪，仅使用拍照扫码');
+    });
+
+    startApp();
+</script>
+</body>
+</html>

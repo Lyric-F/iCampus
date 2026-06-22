@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>我的收藏 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #fafcff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { max-width: 540px; width: 100%; margin: 0 auto; background: #fafcff; min-height: 100vh; display: flex; flex-direction: column; }
+        .top-bar { background: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eef2f6; }
+        .back-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #f5f5f7; border-radius: 50%; cursor: pointer; }
+        .top-title { flex: 1; font-size: 18px; font-weight: 600; text-align: center; }
+        .post-list { padding: 12px 16px; }
+        .post-card {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #eef2f6;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .post-card:active { transform: scale(0.98); background: #f5f5f7; }
+        .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .post-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #eef3fc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-size: 22px;
+            color: #0071e3;
+        }
+        .post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .post-info { flex: 1; }
+        .post-name { font-weight: 600; font-size: 15px; }
+        .post-tag {
+            font-size: 10px;
+            background: #eef3fc;
+            padding: 2px 8px;
+            border-radius: 20px;
+            display: inline-block;
+            color: #0071e3;
+            margin-left: 6px;
+        }
+        .post-time { font-size: 11px; color: #8e8e93; margin-top: 4px; }
+        .post-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; color: #1c1c1e; }
+        .post-content {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #8e8e93;
+        }
+        .post-stats { display: flex; gap: 16px; }
+        .unfavorite-btn {
+            background: none;
+            border: none;
+            color: #ff3b30;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .unfavorite-btn:active { background: rgba(255,59,48,0.1); }
+        .empty-state { text-align: center; padding: 60px 20px; color: #9ca3af; }
+        body.dark .app-container { background: #0a0c15; }
+        body.dark .top-bar, body.dark .post-card { background: #13182a; border-color: #2c2e3a; }
+        body.dark .post-title { color: #f5f5f7; }
+        body.dark .post-content { color: #98989e; }
+        body.dark .post-card:active { background: #1e1e2a; }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-bar">
+        <div class="back-btn" onclick="goTo('mine.html')"><i class="fas fa-arrow-left"></i></div>
+        <div class="top-title">我的收藏</div>
+        <div style="width:36px;"></div>
+    </div>
+    <div id="favoritesList" class="post-list"></div>
+</div>
+<script src="js/common.js"></script>
+<script>
+    let currentStudentId = null;
+
+    async function loadFavorites() {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) {
+            document.getElementById('favoritesList').innerHTML = '<div class="empty-state">请先登录</div>';
+            return;
+        }
+        currentStudentId = studentId;
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/favorite/list?studentId=${studentId}&currentStudentId=${studentId}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const posts = await res.json();
+            console.log('收藏列表:', posts);
+            const container = document.getElementById('favoritesList');
+            if (!posts || posts.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无收藏</div>';
+                return;
+            }
+            let html = '';
+            posts.forEach(post => {
+                const avatarHtml = post.avatar ? `<img src="${post.avatar.startsWith('http') ? post.avatar : API_BASE_URL + post.avatar}" onerror="this.src=''">` : '<i class="fas fa-user-circle"></i>';
+                html += `
+                    <div class="post-card" data-post-id="${post.id}">
+                        <div class="post-header" onclick="goToPostDetail(${post.id})">
+                            <div class="post-avatar">${avatarHtml}</div>
+                            <div class="post-info">
+                                <div>
+                                    <span class="post-name">${escapeHtml(post.nickname || post.studentId)}</span>
+                                    <span class="post-tag">#${escapeHtml(post.type)}</span>
+                                </div>
+                                <div class="post-time">${formatRelativeTime(post.createTime)}</div>
+                            </div>
+                        </div>
+                        <div class="post-title" onclick="goToPostDetail(${post.id})">${escapeHtml(post.title)}</div>
+                        <div class="post-content" onclick="goToPostDetail(${post.id})">${escapeHtml((post.content || '').substring(0, 120))}${(post.content || '').length > 120 ? '...' : ''}</div>
+                        <div class="post-footer">
+                            <div class="post-stats">
+                                <span><i class="far fa-thumbs-up"></i> ${post.likeCount || 0}</span>
+                                <span><i class="far fa-comment"></i> ${post.commentCount || 0}</span>
+                            </div>
+                            <button class="unfavorite-btn" onclick="unfavorite(${post.id}, this)" title="取消收藏"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        } catch(e) {
+            console.error(e);
+            document.getElementById('favoritesList').innerHTML = '<div class="empty-state">加载失败</div>';
+        }
+    }
+
+    // 取消收藏
+    window.unfavorite = async function(postId, btn) {
+        if (!currentStudentId) return;
+        try {
+            const formData = new URLSearchParams();
+            formData.append('studentId', currentStudentId);
+            formData.append('postId', postId);
+            const res = await fetch(API_BASE_URL + '/api/favorite/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success && !data.favorited) {
+                const card = btn.closest('.post-card');
+                if (card) card.remove();
+                if (document.querySelectorAll('.post-card').length === 0) {
+                    document.getElementById('favoritesList').innerHTML = '<div class="empty-state">暂无收藏</div>';
+                }
+                showToast('已取消收藏', 'success');
+            } else {
+                showToast('操作失败', 'error');
+            }
+        } catch(e) {
+            showToast('网络错误', 'error');
+        }
+    };
+
+    window.goToPostDetail = function(postId) {
+        if (postId) {
+            window.location.href = `post-detail.html?postId=${postId}`;
+        }
+    };
+
+    // 页面显示时重新加载（包括从详情页返回）
+    window.addEventListener('pageshow', loadFavorites);
+    window.addEventListener('load', loadFavorites);
+</script>
+</body>
+</html>
