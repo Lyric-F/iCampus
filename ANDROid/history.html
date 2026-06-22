@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>浏览记录 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #fafcff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { max-width: 540px; width: 100%; margin: 0 auto; background: #fafcff; min-height: 100vh; display: flex; flex-direction: column; }
+        .top-bar { background: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eef2f6; }
+        .back-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #f5f5f7; border-radius: 50%; cursor: pointer; }
+        .top-title { flex: 1; font-size: 18px; font-weight: 600; text-align: center; }
+        .toolbar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border-bottom: 0.5px solid var(--border-light);
+        }
+        .toolbar-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #0071e3;
+            padding: 6px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+        .toolbar-btn:active { background: rgba(0,113,227,0.1); }
+        .history-list { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+        .post-card {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            border: 1px solid #eef2f6;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .post-card:active { transform: scale(0.98); background: #f5f5f7; }
+        .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .post-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #eef3fc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-size: 22px;
+            color: #0071e3;
+        }
+        .post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .post-info { flex: 1; }
+        .post-name { font-weight: 600; font-size: 15px; }
+        .post-tag {
+            font-size: 10px;
+            background: #eef3fc;
+            padding: 2px 8px;
+            border-radius: 20px;
+            display: inline-block;
+            color: #0071e3;
+            margin-left: 6px;
+        }
+        .post-time { font-size: 11px; color: #8e8e93; margin-top: 4px; }
+        /* 特殊帖子标题样式 */
+        .post-title.special-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 4px 0 8px;
+            line-height: 1.3;
+            color: #1c1c1e;
+        }
+        body.dark .post-title.special-title {
+            color: #f5f5f7;
+        }
+        .delete-history-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #ff3b30;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        .delete-history-btn:active { background: rgba(255,59,48,0.1); }
+        .post-content-text {
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 8px 0 4px;
+            color: #1c1c1e;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-break: break-word;
+            padding-right: 32px;
+        }
+        .post-content-text.expanded {
+            display: block;
+            -webkit-line-clamp: unset;
+        }
+        .toggle-content-btn {
+            color: #0071e3;
+            font-size: 13px;
+            cursor: pointer;
+            margin: 4px 0 8px;
+            display: inline-block;
+        }
+        .post-images {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        .post-image-item {
+            flex-shrink: 0;
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+        .post-image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .image-count-badge {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100px;
+            height: 100px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 12px;
+        }
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #8e8e93;
+        }
+        .post-actions {
+            display: flex;
+            gap: 16px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+        body.dark .top-bar, body.dark .post-card, body.dark .toolbar { background: #13182a; border-color: #2c2e3a; }
+        body.dark .post-content-text { color: #e2e8f0; }
+        body.dark .post-card:active { background: #1e253e; }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-bar">
+        <div class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></div>
+        <div class="top-title">浏览记录</div>
+        <div style="width:36px;"></div>
+    </div>
+    <div id="toolbar" class="toolbar" style="display: none;">
+        <button class="toolbar-btn" id="clearAllHistoryBtn" title="清空所有"><i class="fas fa-trash-alt"></i></button>
+    </div>
+    <div id="historyList" class="history-list">加载中...</div>
+</div>
+<script src="js/common.js"></script>
+<script>
+    const STORAGE_HISTORY = "icampus_browse_history";
+
+    // 获取或生成浏览量（仅用于特殊帖子）
+    function getPostViewCount(post) {
+        if (post.viewCount && post.viewCount > 0) return post.viewCount;
+        const key = `post_view_${post.id}`;
+        let views = localStorage.getItem(key);
+        if (!views) {
+            views = Math.floor(Math.random() * 1900) + 100;
+            localStorage.setItem(key, views);
+        }
+        return parseInt(views);
+    }
+
+    // 内容折叠/展开函数（仅普通帖子）
+    window.toggleContent = function(postId) {
+        const contentDiv = document.getElementById(`history-content-${postId}`);
+        if (!contentDiv) return;
+        const isExpanded = contentDiv.classList.contains('expanded');
+        const btn = contentDiv.nextElementSibling;
+        if (isExpanded) {
+            contentDiv.classList.remove('expanded');
+            btn.innerText = '展开全文';
+        } else {
+            contentDiv.classList.add('expanded');
+            btn.innerText = '收起';
+        }
+    };
+
+    // 删除单条浏览记录
+    async function deleteHistoryItem(postId, element) {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) return;
+        if (typeof showConfirmDialog === 'function') {
+            showConfirmDialog('确定从浏览记录中移除该帖子吗？', async () => {
+                const history = JSON.parse(localStorage.getItem(STORAGE_HISTORY) || '{}');
+                let userHistory = history[studentId] || [];
+                userHistory = userHistory.filter(id => id !== postId);
+                history[studentId] = userHistory;
+                localStorage.setItem(STORAGE_HISTORY, JSON.stringify(history));
+                const card = element.closest('.post-card');
+                if (card) card.remove();
+                if (document.querySelectorAll('.post-card').length === 0) {
+                    document.getElementById('historyList').innerHTML = '<div class="empty-state">暂无浏览记录</div>';
+                    document.getElementById('toolbar').style.display = 'none';
+                }
+                showToast('已移除', 'success');
+            });
+        } else {
+            if (confirm('确定从浏览记录中移除该帖子吗？')) {
+                // 同上逻辑
+                const history = JSON.parse(localStorage.getItem(STORAGE_HISTORY) || '{}');
+                let userHistory = history[studentId] || [];
+                userHistory = userHistory.filter(id => id !== postId);
+                history[studentId] = userHistory;
+                localStorage.setItem(STORAGE_HISTORY, JSON.stringify(history));
+                const card = element.closest('.post-card');
+                if (card) card.remove();
+                if (document.querySelectorAll('.post-card').length === 0) {
+                    document.getElementById('historyList').innerHTML = '<div class="empty-state">暂无浏览记录</div>';
+                    document.getElementById('toolbar').style.display = 'none';
+                }
+                showToast('已移除', 'success');
+            }
+        }
+    }
+
+    // 清空所有浏览记录
+    async function clearAllHistory() {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) return;
+        if (typeof showConfirmDialog === 'function') {
+            showConfirmDialog('确定清空所有浏览记录吗？', async () => {
+                const history = JSON.parse(localStorage.getItem(STORAGE_HISTORY) || '{}');
+                history[studentId] = [];
+                localStorage.setItem(STORAGE_HISTORY, JSON.stringify(history));
+                document.getElementById('historyList').innerHTML = '<div class="empty-state">暂无浏览记录</div>';
+                document.getElementById('toolbar').style.display = 'none';
+                showToast('已清空', 'success');
+            });
+        } else {
+            if (confirm('确定清空所有浏览记录吗？')) {
+                const history = JSON.parse(localStorage.getItem(STORAGE_HISTORY) || '{}');
+                history[studentId] = [];
+                localStorage.setItem(STORAGE_HISTORY, JSON.stringify(history));
+                document.getElementById('historyList').innerHTML = '<div class="empty-state">暂无浏览记录</div>';
+                document.getElementById('toolbar').style.display = 'none';
+                showToast('已清空', 'success');
+            }
+        }
+    }
+
+    async function loadHistory() {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) {
+            document.getElementById('historyList').innerHTML = '<div class="empty-state">请先登录</div>';
+            return;
+        }
+        const history = JSON.parse(localStorage.getItem(STORAGE_HISTORY) || '{}');
+        const postIds = history[studentId] || [];
+        if (postIds.length === 0) {
+            document.getElementById('historyList').innerHTML = '<div class="empty-state">暂无浏览记录</div>';
+            document.getElementById('toolbar').style.display = 'none';
+            return;
+        }
+        document.getElementById('toolbar').style.display = 'flex';
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/post/list?studentId=${studentId}`);
+            const allPosts = await res.json();
+            const postMap = new Map();
+            allPosts.forEach(p => postMap.set(p.id, p));
+            const posts = postIds.map(id => postMap.get(id)).filter(p => p);
+            if (posts.length === 0) {
+                document.getElementById('historyList').innerHTML = '<div class="empty-state">暂无浏览记录</div>';
+                document.getElementById('toolbar').style.display = 'none';
+                return;
+            }
+            const container = document.getElementById('historyList');
+            container.innerHTML = posts.map(post => {
+                const isSpecial = (post.type === '校园公告' || post.type === '活动报名');
+                // 特殊帖子：显示标题，不显示内容；普通帖子：显示内容
+                let titleHtml = '';
+                let contentHtml = '';
+                let imagesHtml = '';
+                let toggleBtnHtml = '';
+
+                if (isSpecial) {
+                    titleHtml = `<div class="post-title special-title">${escapeHtml(post.title)}</div>`;
+                } else {
+                    const contentText = escapeHtml(post.content);
+                    const contentId = `history-content-${post.id}`;
+                    const needToggle = post.content.length > 100;
+                    toggleBtnHtml = needToggle ? `<div class="toggle-content-btn" data-id="${post.id}" onclick="event.stopPropagation(); toggleContent(${post.id})">展开全文</div>` : '';
+                    contentHtml = `
+                        <div class="post-content-text" id="${contentId}">${contentText}</div>
+                        ${toggleBtnHtml}
+                    `;
+                    // 图片区域（仅普通帖子显示，特殊帖子可选，但为简洁可不显示）
+                    if (post.imageList && post.imageList.length) {
+                        const displayImages = post.imageList.slice(0, 3);
+                        const remaining = post.imageList.length - 3;
+                        imagesHtml = `<div class="post-images">`;
+                        displayImages.forEach(url => {
+                            imagesHtml += `<div class="post-image-item"><img src="${url}" loading="lazy"></div>`;
+                        });
+                        if (remaining > 0) {
+                            imagesHtml += `<div class="post-image-item image-count-badge">+${remaining}</div>`;
+                        }
+                        imagesHtml += `</div>`;
+                    }
+                }
+
+                // 底部互动栏
+                let interactionsHtml = '';
+                if (isSpecial) {
+                    const viewCount = getPostViewCount(post);
+                    interactionsHtml = `<div class="post-actions"><span><i class="fas fa-eye"></i> ${viewCount}</span></div>`;
+                } else {
+                    interactionsHtml = `<div class="post-actions">
+                        <span><i class="far fa-thumbs-up"></i> ${post.likeCount || 0}</span>
+                        <span><i class="far fa-comment"></i> ${post.commentCount || 0}</span>
+                    </div>`;
+                }
+
+                const avatarHtml = post.avatar ? `<img src="${post.avatar.startsWith('http') ? post.avatar : API_BASE_URL + post.avatar}" style="width:100%;height:100%;object-fit:cover">` : '<i class="fas fa-user-circle"></i>';
+                return `
+                    <div class="post-card" data-post-id="${post.id}">
+                        <button class="delete-history-btn" onclick="event.stopPropagation(); deleteHistoryItem(${post.id}, this)" title="删除记录"><i class="fas fa-trash-alt"></i></button>
+                        <div onclick="goToPostDetail(${post.id})">
+                            <div class="post-header">
+                                <div class="post-avatar" onclick="event.stopPropagation(); showUserCard('${post.studentId}', '${escapeHtml(post.nickname || post.studentId)}', '${post.avatar || ''}')">${avatarHtml}</div>
+                                <div class="post-info">
+                                    <div>
+                                        <span class="post-name" onclick="event.stopPropagation(); showUserCard('${post.studentId}', '${escapeHtml(post.nickname || post.studentId)}', '${post.avatar || ''}')">${escapeHtml(post.nickname || post.studentId)}</span>
+                                        <span class="post-tag">#${escapeHtml(post.type)}</span>
+                                    </div>
+                                    <div class="post-time">${formatRelativeTime(post.createTime)}</div>
+                                </div>
+                            </div>
+                            ${titleHtml}
+                            ${contentHtml}
+                            ${imagesHtml}
+                            <div class="post-footer">
+                                <span>${formatRelativeTime(post.createTime)}</span>
+                                ${interactionsHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            const clearBtn = document.getElementById('clearAllHistoryBtn');
+            if (clearBtn) {
+                clearBtn.removeEventListener('click', clearAllHistory);
+                clearBtn.addEventListener('click', clearAllHistory);
+            }
+        } catch(e) {
+            console.error(e);
+            document.getElementById('historyList').innerHTML = '<div class="empty-state">加载失败</div>';
+            document.getElementById('toolbar').style.display = 'none';
+        }
+    }
+
+    function goToPostDetail(postId) {
+        window.location.href = `post-detail.html?postId=${postId}`;
+    }
+
+    function goBack() {
+        window.history.back();
+    }
+
+    window.addEventListener('load', loadHistory);
+</script>
+</body>
+</html>

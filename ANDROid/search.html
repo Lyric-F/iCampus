@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>搜索结果 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #fafcff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+        .app-container {
+            max-width: 540px;
+            width: 100%;
+            margin: 0 auto;
+            background: inherit;
+            position: relative;
+        }
+        .search-page-header {
+            padding: 12px 16px;
+            background: white;
+            border-bottom: 1px solid #eef2f6;
+        }
+        .search-bar {
+            background: #f5f5f7;
+            border-radius: 30px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .search-bar i {
+            color: #8e8e93;
+        }
+        .search-bar input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            outline: none;
+        }
+        .search-history-card {
+            background: white;
+            margin: 16px;
+            border-radius: 24px;
+            padding: 12px;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .history-item {
+            background: #f5f5f7;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .post-list {
+            padding: 12px 16px;
+        }
+        .post-card {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #eef2f6;
+            cursor: pointer;
+        }
+        .post-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .post-content {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .post-meta {
+            font-size: 12px;
+            color: #8e8e93;
+            display: flex;
+            gap: 16px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+        .tabbar {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="search-page-header">
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input id="searchInputPage" type="text" placeholder="搜失物、二手、公告" autocomplete="off">
+            <i class="fas fa-times" id="clearSearchPage" style="cursor:pointer; color:#8e8e93; display:none;"></i>
+        </div>
+    </div>
+    <div id="searchHistoryContainer" class="search-history-card" style="display: none;">
+        <div class="history-header">
+            <span>最近搜索</span>
+            <span class="history-manage" id="manageHistoryBtn">管理记录</span>
+        </div>
+        <div class="history-list" id="historyList"></div>
+    </div>
+    <div id="searchResultList" class="post-list"></div>
+</div>
+<script src="js/common.js"></script>
+<script>
+    const searchInput = document.getElementById('searchInputPage');
+    const clearBtn = document.getElementById('clearSearchPage');
+    const historyContainer = document.getElementById('searchHistoryContainer');
+    const historyListDiv = document.getElementById('historyList');
+    const resultContainer = document.getElementById('searchResultList');
+    let searchHistory = [];
+
+    function loadSearchHistory() {
+        const saved = localStorage.getItem('icampus_search_history_v2');
+        searchHistory = saved ? JSON.parse(saved) : [];
+        renderHistoryList();
+    }
+    function saveSearchHistory() {
+        localStorage.setItem('icampus_search_history_v2', JSON.stringify(searchHistory));
+        renderHistoryList();
+    }
+    function addSearchHistory(keyword) {
+        if (!keyword.trim()) return;
+        searchHistory = searchHistory.filter(h => h !== keyword);
+        searchHistory.unshift(keyword);
+        if (searchHistory.length > 10) searchHistory.pop();
+        saveSearchHistory();
+    }
+    function deleteHistoryItem(keyword, e) {
+        e.stopPropagation();
+        searchHistory = searchHistory.filter(h => h !== keyword);
+        saveSearchHistory();
+        if (searchHistory.length === 0) historyContainer.style.display = 'none';
+    }
+    function clearHistory() {
+        if (confirm('清空所有搜索记录？')) {
+            searchHistory = [];
+            saveSearchHistory();
+            historyContainer.style.display = 'none';
+        }
+    }
+    function renderHistoryList() {
+        if (searchHistory.length === 0) {
+            historyContainer.style.display = 'none';
+            return;
+        }
+        historyContainer.style.display = 'block';
+        historyListDiv.innerHTML = searchHistory.map(keyword => `
+            <div class="history-item" data-keyword="${escapeHtml(keyword)}">
+                <span>${escapeHtml(keyword)}</span>
+                <i class="fas fa-times-circle" style="margin-left:6px; font-size:10px; color:#999;" onclick="deleteHistoryItem('${escapeHtml(keyword)}', event)"></i>
+            </div>
+        `).join('');
+        document.querySelectorAll('.history-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (e.target.classList.contains('fa-times-circle')) return;
+                const kw = item.getAttribute('data-keyword');
+                searchInput.value = kw;
+                performSearch(kw);
+            });
+        });
+    }
+
+    async function performSearch(keyword) {
+        if (!keyword.trim()) {
+            resultContainer.innerHTML = '';
+            return;
+        }
+        addSearchHistory(keyword);
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/post/search?keyword=${encodeURIComponent(keyword)}`);
+            const posts = await res.json();
+            if (!posts || posts.length === 0) {
+                resultContainer.innerHTML = '<div class="empty-state">没有找到相关结果</div>';
+                return;
+            }
+            resultContainer.innerHTML = posts.map(post => `
+                <div class="post-card" onclick="goToPostDetail(${post.id})">
+                    <div class="post-title">${escapeHtml(post.title)}</div>
+                    <div class="post-content">${escapeHtml(post.content.substring(0, 80))}${post.content.length > 80 ? '...' : ''}</div>
+                    <div class="post-meta">
+                        <span>${post.type}</span>
+                        <span>❤️ ${post.likeCount || 0}</span>
+                        <span>💬 ${post.commentCount || 0}</span>
+                        <span>${formatRelativeTime(post.createTime)}</span>
+                    </div>
+                </div>
+            `).join('');
+        } catch(e) {
+            resultContainer.innerHTML = '<div class="empty-state">搜索失败</div>';
+        }
+    }
+
+    searchInput.addEventListener('input', (e) => {
+        const val = e.target.value;
+        clearBtn.style.display = val ? 'block' : 'none';
+        if (val === '') {
+            resultContainer.innerHTML = '';
+            if (searchHistory.length > 0) historyContainer.style.display = 'block';
+        } else {
+            historyContainer.style.display = 'none';
+            performSearch(val);
+        }
+    });
+    clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        clearBtn.style.display = 'none';
+        resultContainer.innerHTML = '';
+        if (searchHistory.length > 0) historyContainer.style.display = 'block';
+    });
+    document.getElementById('manageHistoryBtn').addEventListener('click', () => {
+        if (confirm('清空所有搜索记录？')) clearHistory();
+    });
+
+    function goToPostDetail(postId) {
+        alert('帖子详情页开发中');
+    }
+
+    window.addEventListener('load', () => {
+        loadSearchHistory();
+        const urlParams = new URLSearchParams(window.location.search);
+        const keyword = urlParams.get('keyword');
+        if (keyword) {
+            searchInput.value = keyword;
+            performSearch(keyword);
+        }
+    });
+</script>
+</body>
+</html>

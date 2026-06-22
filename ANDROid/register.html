@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>注册新账号 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 与 login 样式一致 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #fafcff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .app-container {
+            max-width: 540px;
+            width: 100%;
+            margin: 0 auto;
+            background: inherit;
+        }
+        .top-bar {
+            background: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #eef2f6;
+            margin-bottom: 20px;
+        }
+        body.dark .top-bar {
+            background: #13182a;
+            border-color: #2c2e3a;
+        }
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f7;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .top-title {
+            flex: 1;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            margin: 16px;
+            border: 1px solid #eef2f6;
+        }
+        body.dark .card {
+            background: #13182a;
+            border-color: #2c2e3a;
+        }
+        .form-item {
+            margin-bottom: 16px;
+        }
+        .form-item label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .form-item input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #eef2f6;
+            border-radius: 28px;
+            font-size: 14px;
+            background: white;
+        }
+        body.dark .form-item input {
+            background: #1e253e;
+            border-color: #2c2e3a;
+            color: white;
+        }
+        .btn {
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 16px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .link {
+            text-align: center;
+            margin: 10px;
+            color: #007aff;
+            cursor: pointer;
+        }
+        .tabbar {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-bar">
+        <div class="back-btn" onclick="goTo('login.html')"><i class="fas fa-arrow-left"></i></div>
+        <div class="top-title">注册新账号</div>
+    </div>
+    <div class="card">
+        <div class="form-item"><label><i class="fas fa-id-card"></i> 学号</label><input id="regStudentId" placeholder="请输入学号"></div>
+        <div class="form-item"><label><i class="fas fa-lock"></i> 密码</label><input id="regPassword" type="password" placeholder="请输入密码"></div>
+        <div class="form-item"><label><i class="fas fa-check-circle"></i> 确认密码</label><input id="regConfirm" type="password" placeholder="请再次输入密码"></div>
+    </div>
+    <div class="btn" onclick="doRegister()"><i class="fas fa-user-plus"></i> 注册</div>
+    <div class="link" onclick="goTo('login.html')">已有账号？去登录</div>
+</div>
+<script src="js/common.js"></script>
+<script>
+    async function doRegister() {
+        const studentId = document.getElementById('regStudentId').value.trim();
+        const password = document.getElementById('regPassword').value.trim();
+        const confirm = document.getElementById('regConfirm').value.trim();
+        if (!studentId || !password || !confirm) {
+            showToast('请填写完整信息', 'error');
+            return;
+        }
+        if (password !== confirm) {
+            showToast('两次密码不一致', 'error');
+            return;
+        }
+        try {
+            const res = await fetch(API_BASE_URL + '/api/user/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `studentId=${encodeURIComponent(studentId)}&password=${encodeURIComponent(password)}`
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('注册成功，请登录', 'success');
+                setTimeout(() => goTo('login.html'), 1500);
+            } else {
+                showToast(data.message || '注册失败', 'error');
+            }
+        } catch(e) {
+            showToast('网络错误', 'error');
+        }
+    }
+</script>
+</body>
+</html>

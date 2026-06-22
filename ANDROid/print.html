@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>即刻打印 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 新增：全屏居中 + 隐藏底部导航栏 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #fafcff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+        .app-container {
+            max-width: 540px;
+            width: 100%;
+            margin: 0 auto;
+            background: inherit;
+            position: relative;
+        }
+        /* 隐藏原有的底部导航栏 */
+        .tabbar {
+            display: none !important;
+        }
+        /* 确保原有内容样式不受影响 */
+        .print-nav, .print-shop-card, .print-location-card, .print-tip-card, .print-services-grid {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <!-- 原有全部内容，直接包裹进来 -->
+    <div class="print-nav">
+        <div class="print-nav-back" onclick="goTo('index.html')"><i class="fas fa-chevron-left"></i></div>
+        <div class="print-nav-title">即刻打印</div>
+        <div class="print-nav-right"></div>
+    </div>
+    <div class="print-shop-card">
+        <div class="print-shop-avatar"><i class="fas fa-store"></i></div>
+        <div class="print-shop-details">
+            <div class="print-shop-name">唯看度图文·校园店</div>
+            <div class="print-shop-location"><i class="fas fa-map-pin"></i> 南京工业大学浦江学院</div>
+            <div class="print-shop-stats"><span><i class="fas fa-star" style="color:#ff9f0a;"></i> 4.9</span><span><i class="far fa-clock"></i> 今日营业中</span></div>
+        </div>
+    </div>
+    <div class="print-location-card" onclick="showToast('二期图文店 · 步行2分钟可达', 'info')">
+        <div class="print-location-info"><i class="fas fa-location-dot"></i> 二期图文店 · 即刻取件</div>
+        <div class="print-location-action"><i class="fas fa-chevron-right"></i></div>
+    </div>
+    <div class="print-tip-card"><i class="fas fa-cloud-upload-alt"></i> 提前上传文件，顺路即取 · 支持远程打印</div>
+    <div class="print-services-grid">
+        <div class="print-service-card" onclick="goTo('document-print.html')">
+            <div class="print-service-icon"><i class="fas fa-file-alt"></i></div>
+            <div><div class="print-service-title">文档/图片打印</div><div class="print-service-desc">Word/PDF/图片 高速彩印</div></div>
+        </div>
+        <div class="print-service-card" onclick="goTo('copy-id.html')">
+            <div class="print-service-icon"><i class="fas fa-id-card"></i></div>
+            <div><div class="print-service-title">证件复印</div><div class="print-service-desc">身份证/学生证/驾驶证 立等可取</div></div>
+        </div>
+        <div class="print-service-card" onclick="showToast('照片冲印即将开放，敬请期待', 'info')">
+            <div class="print-service-icon"><i class="fas fa-camera"></i></div>
+            <div><div class="print-service-title">照片冲印</div><div class="print-service-desc">1寸/2寸证件照 生活照 高质量</div></div>
+        </div>
+    </div>
+    <!-- 原有的底部 tabbar 已被隐藏，无需删除，仅用 CSS 隐藏 -->
+    <div class="tabbar" style="display:none;">
+        <div class="tabbar-item" onclick="goTo('index.html')"><i class="fas fa-home"></i><span>首页</span></div>
+        <div class="tabbar-item" onclick="goTo('help.html')"><i class="fas fa-planet-ringed"></i><span>互助</span></div>
+        <div class="tabbar-item" onclick="goTo('publish.html')"><div class="tabbar-publish"><i class="fas fa-plus"></i></div></div>
+        <div class="tabbar-item" onclick="goTo('msg.html')"><i class="far fa-comment"></i><span>消息</span></div>
+        <div class="tabbar-item" onclick="goTo('mine.html')"><i class="far fa-user"></i><span>我的</span></div>
+    </div>
+</div>
+<script src="js/common.js"></script>
+</body>
+</html>

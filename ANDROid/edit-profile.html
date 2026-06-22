@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>编辑资料 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ========== 原有样式（保持不变） ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #fafcff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            transition: background 0.2s ease, color 0.2s ease;
+            color: #121826;
+        }
+        body.dark { background: #0a0c15; color: #eff3fc; }
+        .top-bar {
+            background: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #eef2f6;
+        }
+        body.dark .top-bar { background: #13182a; border-color: #2c2e3a; }
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f7;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .top-title { flex: 1; font-size: 18px; font-weight: 600; text-align: center; }
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            margin: 16px;
+            border: 1px solid #eef2f6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        body.dark .card { background: #13182a; border-color: #2c2e3a; }
+        .form-item { margin-bottom: 16px; }
+        .form-item label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #1c1c1e;
+        }
+        body.dark .form-item label { color: #b3c0e5; }
+        .form-item input, .form-item textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #eef2f6;
+            border-radius: 28px;
+            font-size: 14px;
+            background: white;
+            color: #1c1c1e;
+        }
+        body.dark .form-item input, body.dark .form-item textarea {
+            background: #1e253e;
+            border-color: #2c2e3a;
+            color: white;
+        }
+        .btn {
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 16px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .btn:active { transform: scale(0.98); }
+        body.dark .btn { background: #0a84ff; }
+        .tabbar { display: none !important; }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+        .app-container {
+            max-width: 540px;
+            width: 100%;
+            margin: 0 auto;
+            background: inherit;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-bar">
+        <div class="back-btn" onclick="goTo('mine.html')"><i class="fas fa-arrow-left"></i></div>
+        <div class="top-title">编辑资料</div>
+    </div>
+    <div class="card">
+        <div class="form-item"><label><i class="fas fa-user"></i> 姓名</label><input id="editName" placeholder="请输入姓名"></div>
+        <div class="form-item"><label><i class="fas fa-user-tag"></i> 昵称（显示名）</label><input id="editNickname" placeholder="请输入昵称"></div>
+        <div class="form-item"><label><i class="fas fa-id-card"></i> 学号</label><input id="editStudentId" readonly disabled style="background:#f2f2f5;"></div>
+        <div class="form-item"><label><i class="fas fa-comment"></i> 个性签名</label><textarea id="editBio" rows="3" placeholder="一句话介绍自己"></textarea></div>
+        <div class="form-item">
+            <label><i class="fas fa-image"></i> 头像</label>
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <img id="avatarPreview" src="" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; background: #f0f0f0; display: none;">
+                <div style="flex: 1; min-width: 150px;">
+                    <input type="file" id="avatarFile" accept="image/*" style="width: 100%; padding: 8px;">
+                    <div style="margin-top: 8px;">
+                        <button type="button" id="uploadAvatarBtn" class="btn" style="margin:0; padding: 10px 20px; background: #0071e3; font-size: 14px;">上传头像</button>
+                    </div>
+                </div>
+            </div>
+            <div style="font-size: 12px; color: #8e8e93; margin-top: 8px;">支持jpg、png格式，大小不超过10MB（移动端会自动压缩）</div>
+        </div>
+        <div class="form-item"><label><i class="fas fa-image"></i> 头像URL</label><input id="editAvatar" placeholder="头像图片链接"></div>
+    </div>
+    <div class="btn" onclick="updateProfile()"><i class="fas fa-save"></i> 保存修改</div>
+</div>
+<script src="js/common.js"></script>
+<script>
+    window.addEventListener('load', () => {
+        loadProfileForEdit();
+
+        // 显式绑定上传按钮事件（确保点击时调用 uploadAvatar）
+        const uploadBtn = document.getElementById('uploadAvatarBtn');
+        if (uploadBtn) {
+            uploadBtn.onclick = () => uploadAvatar();
+        }
+
+        // 可选：文件选择时预览
+        const fileInput = document.getElementById('avatarFile');
+        if (fileInput && typeof previewAvatar === 'function') {
+            fileInput.onchange = () => previewAvatar(fileInput.files[0]);
+        }
+    });
+</script>
+</body>
+</html>

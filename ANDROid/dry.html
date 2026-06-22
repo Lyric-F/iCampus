@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>干洗护理 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #fafcff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+        .app-container {
+            max-width: 540px;
+            width: 100%;
+            margin: 0 auto;
+            background: inherit;
+            position: relative;
+        }
+        .top-bar {
+            background: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #eef2f6;
+        }
+        body.dark .top-bar { background: #13182a; border-color: #2c2e3a; }
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f7;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .top-title {
+            flex: 1;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            margin: 16px;
+            border: 1px solid #eef2f6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        body.dark .card { background: #13182a; border-color: #2c2e3a; }
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-info { color: #5c6072; line-height: 1.4; }
+        body.dark .card-info { color: #b3c0e5; }
+        .form-item { margin-bottom: 16px; }
+        .form-item label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #1c1c1e;
+        }
+        body.dark .form-item label { color: #b3c0e5; }
+        .form-item input, .form-item textarea, .form-item select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #eef2f6;
+            border-radius: 28px;
+            font-size: 14px;
+            background: white;
+            color: #1c1c1e;
+        }
+        body.dark .form-item input, body.dark .form-item textarea, body.dark .form-item select {
+            background: #1e253e;
+            border-color: #2c2e3a;
+            color: white;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: normal;
+            cursor: pointer;
+            user-select: none;
+        }
+        .checkbox-group input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+        .btn {
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 16px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .btn:active { transform: scale(0.98); }
+        body.dark .btn { background: #0a84ff; }
+        .tabbar { display: none !important; }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-bar">
+        <div class="back-btn" onclick="goTo('run.html')"><i class="fas fa-arrow-left"></i></div>
+        <div class="top-title">干洗护理</div>
+    </div>
+    <div class="card">
+        <div class="card-title"><i class="fas fa-tshirt"></i> 精洗 · 上门取送</div>
+        <div class="card-info">衣物/鞋包/家纺，校内免费取送，洁净如新。</div>
+    </div>
+    <div class="card">
+        <div class="card-title"><i class="fas fa-coins"></i> 轻奢价目</div>
+        <div class="card-info">上衣 15~25元 · 外套大衣 30~50元<br>鞋类清洗 20元/双 · 窗帘按尺寸</div>
+    </div>
+    <div class="card">
+        <div class="card-title"><i class="fas fa-calendar-alt"></i> 在线预约</div>
+        <div class="form-item"><label>姓名</label><input type="text" id="userName" placeholder="你的名字"></div>
+        <div class="form-item"><label>联系电话 *</label><input type="tel" id="userPhone" placeholder="手机号" required></div>
+        <div class="form-item"><label>取件时间</label><input type="datetime-local" id="pickTime"></div>
+        <div class="form-item"><label>取件地点 *</label><input type="text" id="pickupPlace" placeholder="宿舍楼+房间号"></div>
+        <div class="form-item"><label>送达地点 *</label><input type="text" id="deliveryPlace" placeholder="洗衣店 / 宿舍"></div>
+        <div class="form-item"><label>衣物描述 *</label><textarea id="clothesDesc" rows="2" placeholder="例：羽绒服1件，羊毛衫2件"></textarea></div>
+        <div class="form-item"><label>预估费用 (元) *</label><input type="number" id="estimatedPrice" placeholder="参考价目填写" value="15" step="1"></div>
+        <div class="form-item">
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="urgentCheckbox"> 🔥 急用（加急优先处理）</label>
+            </div>
+        </div>
+        <div class="form-item" id="tipField" style="display: none;">
+            <label>额外小费 (元)</label>
+            <input type="number" id="tipAmount" value="0" step="1" min="0" placeholder="给跑腿员的小费">
+        </div>
+        <div class="form-item"><label>备注</label><textarea id="remark" rows="2" placeholder="特殊要求..."></textarea></div>
+    </div>
+    <div class="btn" id="submitDryClean"><i class="fas fa-check-circle"></i> 发布干洗任务</div>
+</div>
+<script src="js/common.js"></script>
+<script>
+    const urgentCheckbox = document.getElementById('urgentCheckbox');
+    const tipField = document.getElementById('tipField');
+    const tipInput = document.getElementById('tipAmount');
+
+    urgentCheckbox.addEventListener('change', function() {
+        tipField.style.display = this.checked ? 'block' : 'none';
+        if (!this.checked) tipInput.value = 0;
+    });
+
+    document.getElementById('submitDryClean').addEventListener('click', async function() {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) {
+            showToast('请先登录', 'error');
+            goTo('login.html');
+            return;
+        }
+
+        const userName = document.getElementById('userName').value.trim();
+        const userPhone = document.getElementById('userPhone').value.trim();
+        const pickupPlace = document.getElementById('pickupPlace').value.trim();
+        const deliveryPlace = document.getElementById('deliveryPlace').value.trim();
+        const clothesDesc = document.getElementById('clothesDesc').value.trim();
+        let estimatedPrice = parseFloat(document.getElementById('estimatedPrice').value);
+        const pickTime = document.getElementById('pickTime').value;
+        const remark = document.getElementById('remark').value.trim();
+        const urgent = urgentCheckbox.checked;
+        let tip = 0;
+        if (urgent) {
+            tip = parseFloat(tipInput.value);
+            if (isNaN(tip)) tip = 0;
+        }
+
+        if (!userPhone) { showToast('请填写联系电话', 'error'); return; }
+        if (!pickupPlace) { showToast('请填写取件地点', 'error'); return; }
+        if (!deliveryPlace) { showToast('请填写送达地点', 'error'); return; }
+        if (!clothesDesc) { showToast('请描述衣物', 'error'); return; }
+        if (isNaN(estimatedPrice) || estimatedPrice <= 0) { showToast('请填写有效预估费用', 'error'); return; }
+
+        const totalReward = estimatedPrice + tip;
+        const extra = `衣物：${clothesDesc}；取件时间：${pickTime || "尽快"}；备注：${remark || "无"}${urgent ? `；🔥急用 + 小费${tip}元` : ''}`;
+        const contact = userName ? `${userName} ${userPhone}` : userPhone;
+
+        const details = JSON.stringify({
+            type: "干洗专送",
+            pickup: pickupPlace,
+            delivery: deliveryPlace,
+            extra: extra,
+            contact: contact,
+            urgent: urgent,
+            reward: totalReward
+        });
+
+        const order = {
+            studentId: studentId,
+            orderType: 'RUN',
+            amount: totalReward,
+            details: details
+        };
+
+        try {
+            const res = await fetch(API_BASE_URL + '/api/order/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(order)
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('✅ 干洗任务已发布！', 'success');
+                setTimeout(() => goTo('run.html'), 1200);
+            } else {
+                showToast(data.message || '发布失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误，请重试', 'error');
+        }
+    });
+</script>
+</body>
+</html>

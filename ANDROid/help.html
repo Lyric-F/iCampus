@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <script>
+        (function() {
+            // 立即读取 localStorage 并设置夜间模式类，避免闪烁
+            const darkMode = localStorage.getItem('icampus_dark') === 'true';
+            if (darkMode) {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+            }
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>iCampus广场</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #fafcff; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+        .app-container { max-width: 540px; width: 100%; margin: 0 auto; background: inherit; position: relative; }
+        .square-container { display: flex; flex-direction: column; height: calc(100vh - 70px); background: var(--bg-body); overflow: hidden; }
+        .square-top-bar { background: var(--bg-card); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-light); flex-shrink: 0; z-index: 20; }
+        .back-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #0071e3; cursor: pointer; border-radius: 50%; background: #f5f5f5; }
+        .title-area { flex: 1; text-align: center; transition: all 0.3s; }
+        .title-area h1 { font-size: 18px; font-weight: 600; margin: 0; color: var(--text-primary); }
+        .right-actions { display: flex; gap: 12px; }
+        .icon-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: #f5f5f5; border-radius: 50%; cursor: pointer; color: #0071e3; }
+        .search-container { position: absolute; top: 12px; left: 60px; right: 60px; z-index: 25; pointer-events: none; }
+        .search-box { background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-radius: 40px; padding: 8px 16px; display: flex; gap: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); transition: all 0.3s; transform: scale(0.9); opacity: 0; pointer-events: none; }
+        .search-box.active { transform: scale(1); opacity: 1; pointer-events: auto; }
+        .search-box input { flex: 1; border: none; background: transparent; outline: none; }
+        .square-main { display: flex; flex: 1; overflow: hidden; }
+
+        .left-category {
+            width: 110px;
+            background: var(--bg-card);
+            transition: width 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            overflow-y: auto;
+            flex-shrink: 0;
+            border-right: 1px solid var(--border-light);
+            position: relative;
+            z-index: 1;
+        }
+        .left-category.collapsed {
+            width: 56px;
+            border-radius: 28px;
+            margin: 8px 0 8px 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            background: var(--bg-card);
+            border-right: none;
+        }
+        .category-list { padding: 12px 0; }
+        .category-item {
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .left-category.collapsed .category-item span { display: none !important; }
+        .left-category.collapsed .category-item i { font-size: 20px; margin: 0; }
+        .left-category.collapsed .category-item { gap: 0; padding: 12px 0; }
+        .category-item.active {
+            background: rgba(var(--primary-rgb, 0,113,227), 0.1);
+            color: var(--primary);
+            font-weight: 500;
+            border-radius: 20px;
+            margin: 0 4px;
+        }
+        .category-item.recommend {
+            background: linear-gradient(115deg, #ff5e3a, #ff2d55);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            font-weight: 600;
+        }
+        .category-item.recommend.active { background: none; color: #ff3b30; }
+        .collapse-toggle {
+            margin-bottom: 8px;
+            border-bottom: 1px solid var(--border-light);
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .collapse-toggle:hover { color: #0071e3; opacity: 0.8; }
+        .left-category.collapsed .collapse-toggle i { font-size: 20px; }
+
+        .right-content { flex: 1; overflow-y: auto; padding: 12px; }
+        .post-card { background: var(--bg-card); border-radius: 20px; margin-bottom: 12px; padding: 14px; border: 0.5px solid var(--border-light); }
+        .post-header { display: flex; align-items: center; margin-bottom: 10px; }
+        .post-avatar { width: 36px; height: 36px; border-radius: 36px; background: #eef3fc; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 18px; color: #0071e3; overflow: hidden; cursor: pointer; }
+        .post-info { flex: 1; }
+        .post-name { font-weight: 600; font-size: 14px; cursor: pointer; display: inline-block; }
+        .post-tag { font-size: 10px; background: #eff3f8; padding: 2px 8px; border-radius: 20px; display: inline-block; color: #0071e3; margin-left: 6px; }
+        .post-content-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-break: break-word;
+            white-space: normal;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 8px 0 4px;
+            color: #1c1c1e;
+        }
+        .post-content-text.expanded {
+            display: block;
+            -webkit-line-clamp: unset;
+        }
+        .toggle-content-btn {
+            color: #0071e3;
+            font-size: 13px;
+            cursor: pointer;
+            margin: 4px 0 8px;
+            display: inline-block;
+        }
+        .post-footer { display: flex; justify-content: space-between; font-size: 12px; color: #8e8e93; margin-top: 8px; }
+        .post-actions { display: flex; gap: 12px; }
+        .action-icon { cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .action-icon.liked, .action-icon.disliked { color: #ff3b30; }
+        .comments-list { margin-top: 8px; }
+        .comment-item { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .comment-avatar { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; margin-right: 8px; }
+        .comment-nickname { font-weight: 500; cursor: pointer; }
+        .poster-badge { background: #0071e3; color: white; font-size: 10px; padding: 2px 8px; border-radius: 12px; margin-left: 6px; }
+        .comment-actions { display: flex; gap: 12px; font-size: 13px; margin-top: 6px; }
+        .reply-trigger { cursor: pointer; color: #0071e3; }
+        .reply-form { margin-top: 8px; display: flex; gap: 8px; }
+        .reply-form input { flex: 1; padding: 6px 12px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
+        .reply-form button { background: #0071e3; color: white; border: none; border-radius: 20px; padding: 6px 12px; cursor: pointer; }
+        .square-publish-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: none; align-items: center; justify-content: center; }
+        .square-publish-overlay { position: absolute; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(6px); }
+        .square-publish-container { position: relative; width: 90%; max-width: 400px; background: var(--bg-card); border-radius: 32px; max-height: 85vh; overflow-y: auto; animation: modalScale 0.25s ease; }
+        .square-publish-header { padding: 20px; font-size: 19px; font-weight: 620; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid var(--border-light); }
+        .square-publish-header i { font-size: 24px; color: #8e8e93; cursor: pointer; }
+        .square-publish-content { padding: 20px; }
+        .square-publish-footer { display: flex; gap: 12px; padding: 16px 20px; border-top: 0.5px solid var(--border-light); }
+        .square-publish-cancel, .square-publish-submit { flex: 1; padding: 12px; border-radius: 44px; font-size: 17px; font-weight: 590; border: none; cursor: pointer; }
+        .square-publish-cancel { background: #f2f2f5; color: #0071e3; }
+        .square-publish-submit { background: #0071e3; color: white; }
+        @keyframes modalScale { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .empty-state { text-align: center; padding: 40px; color: #8e8e93; }
+        .user-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(6px); z-index: 1000; display: none; align-items: center; justify-content: center; }
+        .user-card { background: white; width: 280px; border-radius: 32px; padding: 20px; text-align: center; animation: modalScale 0.2s ease; }
+        .user-card-avatar { width: 80px; height: 80px; border-radius: 50%; background: #eef3fc; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #0071e3; overflow: hidden; }
+        .user-card-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+        .user-card-id { font-size: 12px; color: #8e8e93; margin-bottom: 16px; }
+        .user-card-buttons { display: flex; gap: 12px; justify-content: center; }
+        .user-card-buttons button { padding: 8px 20px; border-radius: 40px; border: none; font-weight: 500; cursor: pointer; }
+        .btn-follow { background: #0071e3; color: white; }
+        .btn-unfollow { background: #f2f2f5; color: #ff3b30; }
+        .btn-chat { background: #eef2f6; color: #0071e3; }
+        body.dark .user-card { background: #13182a; }
+
+        body.dark .post-image-item,
+        body.dark .detail-image-item {
+            background: #2c2e3a !important;
+        }
+        /* 图片区域 */
+        .post-images {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        .post-image-item {
+            flex-shrink: 0;
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+        .post-image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .image-count-badge {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100px;
+            height: 100px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 12px;
+        }
+        .detail-images {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 16px 0;
+        }
+        .detail-image-item {
+            aspect-ratio: 1 / 1;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+        .detail-image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        body.dark .post-image-item, body.dark .detail-image-item { background: #2c2e3a; }
+        body.dark .post-content-text { color: #e2e8f0; }
+
+        /* 底部导航栏 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 540px;
+            margin: 0 auto;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 20px 24px;
+            border-top: 1px solid #eef2f6;
+            z-index: 99;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.7rem;
+            color: #9095ae;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+        .nav-item i { font-size: 1.35rem; }
+        .nav-item.active { color: var(--primary); font-weight: 600; }
+        .publish-btn {
+            background: #0071e3;
+            width: 52px;
+            height: 52px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -20px;
+            box-shadow: 0 6px 16px rgba(0,113,227,0.2);
+            color: white;
+            font-size: 1.4rem;
+        }
+        .msg-dot {
+            position: absolute;
+            top: -8px;
+            right: -12px;
+            background: #ff3b30;
+            border-radius: 20px;
+            min-width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+            padding: 0 4px;
+            box-sizing: border-box;
+            z-index: 10;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.2);
+            line-height: 1;
+            pointer-events: none;
+        }
+        body.dark .bottom-nav { background: #13182a; border-color: #2c2e3a; }
+        body.dark .msg-dot { box-shadow: 0 0 0 1px #1e1f2a; }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="square-container">
+        <div class="square-top-bar">
+            <div class="back-btn" onclick="goTo('index.html')"><i class="fas fa-arrow-left"></i></div>
+            <div class="title-area" id="titleArea"><h1>iCampus广场</h1></div>
+            <div class="right-actions"><div class="icon-btn" id="searchBtn"><i class="fas fa-search"></i></div></div>
+        </div>
+        <div class="search-container" id="searchContainer"><div class="search-box" id="searchBox"><i class="fas fa-search"></i><input type="text" id="squareSearchInput" placeholder="搜索广场内容"></div></div>
+        <div class="square-main">
+            <div class="left-category" id="leftCategory">
+                <div class="category-list">
+                    <div class="category-item collapse-toggle" id="collapseToggle"><i class="fas fa-chevron-left"></i></div>
+                    <div class="category-item recommend" data-type="recommend"><i class="fas fa-fire"></i><span>推荐</span></div>
+                    <div class="category-item" data-type="latest"><i class="fas fa-clock"></i><span>最新</span></div>
+                    <div class="category-item" data-type="hot"><i class="fas fa-chart-line"></i><span>最热</span></div>
+                    <div class="category-item" data-type="二手交易"><i class="fas fa-store"></i><span>二手交易</span></div>
+                    <div class="category-item" data-type="失物招领"><i class="fas fa-umbrella"></i><span>失物招领</span></div>
+                    <div class="category-item" data-type="助农"><i class="fas fa-seedling"></i><span>助农</span></div>
+                    <div class="category-item" data-type="互助"><i class="fas fa-handshake"></i><span>互助</span></div>
+                    <div class="category-item" data-type="树洞"><i class="fas fa-tree"></i><span>树洞</span></div>
+                    <div class="category-item" data-type="表白墙"><i class="fas fa-heart"></i><span>表白墙</span></div>
+                    <div class="category-item" data-type="吐槽"><i class="fas fa-comment"></i><span>吐槽</span></div>
+                </div>
+            </div>
+            <div class="right-content" id="rightContent"><div id="postsContainer"></div></div>
+        </div>
+    </div>
+    <div class="bottom-nav">
+        <div class="nav-item" data-nav="home"><i class="fas fa-home"></i><span>首页</span></div>
+        <div class="nav-item" data-nav="explore"><i class="fas fa-planet-ringed"></i><span>广场</span></div>
+        <div class="nav-item publish-btn" data-nav="publish"><i class="fas fa-plus"></i></div>
+        <div class="nav-item" data-nav="msg">
+            <i class="far fa-comment"></i>
+            <span>消息</span>
+            <span id="msgBadge" class="msg-dot" style="display: none;">0</span>
+        </div>
+        <div class="nav-item" data-nav="mine"><i class="far fa-user"></i><span>我的</span></div>
+    </div>
+</div>
+<div class="square-publish-modal" id="publishModal">
+    <div class="square-publish-overlay"></div>
+    <div class="square-publish-container">
+        <div class="square-publish-header"><span>发布帖子</span><i class="fas fa-times" id="closePublishModal"></i></div>
+        <div class="square-publish-content">
+            <div class="form-item"><label>分类</label><select id="publishType"><option value="二手交易">二手交易</option><option value="助农">助农</option><option value="互助">互助</option></select></div>
+            <div class="form-item"><label>标题</label><input id="publishTitle" placeholder="请输入标题"></div>
+            <div class="form-item"><label>内容</label><textarea id="publishContent" rows="4" placeholder="描述详情..."></textarea></div>
+        </div>
+        <div class="square-publish-footer"><button class="square-publish-cancel">取消</button><button class="square-publish-submit">发布</button></div>
+    </div>
+</div>
+<div id="userModal" class="user-modal-overlay"><div class="user-card" id="userCardContent"></div></div>
+
+<script src="js/common.js"></script>
+<script>
+    (function() {
+        if (typeof showToast !== 'function') return console.error('缺少 common.js');
+        if (typeof escapeHtml !== 'function' || typeof formatRelativeTime !== 'function') return console.error('缺少工具函数');
+
+        const STORAGE_FOLLOW = "icampus_follow_data";
+        const STORAGE_CHAT = "icampus_chat_messages";
+        const STORAGE_NOTIFY = "icampus_notifications";
+
+        function initStorage() {
+            if (!localStorage.getItem(STORAGE_FOLLOW)) localStorage.setItem(STORAGE_FOLLOW, JSON.stringify({}));
+            if (!localStorage.getItem(STORAGE_CHAT)) localStorage.setItem(STORAGE_CHAT, JSON.stringify({}));
+            if (!localStorage.getItem(STORAGE_NOTIFY)) localStorage.setItem(STORAGE_NOTIFY, JSON.stringify({}));
+        }
+        function getUserFollowing(userId) {
+            const data = JSON.parse(localStorage.getItem(STORAGE_FOLLOW) || "{}");
+            return data[userId]?.following || [];
+        }
+        function followUser(currentUserId, targetUserId) {
+            const data = JSON.parse(localStorage.getItem(STORAGE_FOLLOW) || "{}");
+            if (!data[currentUserId]) data[currentUserId] = { following: [], followers: [] };
+            if (!data[targetUserId]) data[targetUserId] = { following: [], followers: [] };
+            if (!data[currentUserId].following.includes(targetUserId)) data[currentUserId].following.push(targetUserId);
+            if (!data[targetUserId].followers.includes(currentUserId)) data[targetUserId].followers.push(currentUserId);
+            localStorage.setItem(STORAGE_FOLLOW, JSON.stringify(data));
+        }
+        function unfollowUser(currentUserId, targetUserId) {
+            const data = JSON.parse(localStorage.getItem(STORAGE_FOLLOW) || "{}");
+            if (data[currentUserId]) data[currentUserId].following = data[currentUserId].following.filter(id => id !== targetUserId);
+            if (data[targetUserId]) data[targetUserId].followers = data[targetUserId].followers.filter(id => id !== currentUserId);
+            localStorage.setItem(STORAGE_FOLLOW, JSON.stringify(data));
+        }
+        function isFollowing(currentUserId, targetUserId) {
+            return getUserFollowing(currentUserId).includes(targetUserId);
+        }
+        function addNotification(userId, type, fromUserId, postId, content) {
+            const all = JSON.parse(localStorage.getItem(STORAGE_NOTIFY) || "{}");
+            if (!all[userId]) all[userId] = [];
+            all[userId].push({
+                id: Date.now(),
+                type: type,
+                fromUserId: fromUserId,
+                postId: postId,
+                content: content,
+                timestamp: Date.now(),
+                read: false
+            });
+            localStorage.setItem(STORAGE_NOTIFY, JSON.stringify(all));
+            if (typeof updateMsgBadge === 'function') updateMsgBadge();
+        }
+// ========== 关注/粉丝 API ==========
+        async function followUserApi(followerId, followeeId) {
+            const formData = new URLSearchParams();
+            formData.append('followerId', followerId);
+            formData.append('followeeId', followeeId);
+            const res = await fetch(`${API_BASE_URL}/api/follow/follow`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            });
+            return await res.json();
+        }
+        async function unfollowUserApi(followerId, followeeId) {
+            const formData = new URLSearchParams();
+            formData.append('followerId', followerId);
+            formData.append('followeeId', followeeId);
+            const res = await fetch(`${API_BASE_URL}/api/follow/unfollow`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            });
+            return await res.json();
+        }
+        async function isFollowingApi(followerId, followeeId) {
+            const res = await fetch(`${API_BASE_URL}/api/follow/check?followerId=${followerId}&followeeId=${followeeId}`);
+            const data = await res.json();
+            return data.isFollowing;
+        }
+        window.showUserCard = async function(userId, nickname, avatar) {
+            const myId = localStorage.getItem('studentId');
+            if (!myId) { showToast('请先登录', 'error'); goTo('login.html'); return; }
+            // 从后端获取关注状态
+            const followed = await isFollowingApi(myId, userId);
+            const container = document.getElementById('userCardContent');
+            container.innerHTML = `
+        <div class="user-card-avatar">${avatar ? `<img src="${avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` : '<i class="fas fa-user-circle"></i>'}</div>
+        <div class="user-card-name">${escapeHtml(nickname)}</div>
+        <div class="user-card-id">学号: ${userId}</div>
+        <div class="user-card-buttons">
+            <button class="${followed ? 'btn-unfollow' : 'btn-follow'}" onclick="handleFollowAction('${userId}')">${followed ? '取消关注' : '关注'}</button>
+            <button class="btn-chat" onclick="goToChat('${userId}', '${escapeHtml(nickname)}')">发私信</button>
+        </div>
+    `;
+            document.getElementById('userModal').style.display = 'flex';
+        };
+        window.handleFollowAction = async function(targetId) {
+            const myId = localStorage.getItem('studentId');
+            if (!myId) return;
+            const followed = await isFollowingApi(myId, targetId);
+            let result;
+            if (followed) {
+                result = await unfollowUserApi(myId, targetId);
+                if (result.success) showToast('已取消关注', 'success');
+                else showToast(result.message || '操作失败', 'error');
+            } else {
+                result = await followUserApi(myId, targetId);
+                if (result.success) showToast('已关注', 'success');
+                else showToast(result.message || '操作失败', 'error');
+            }
+            if (result.success) {
+                document.getElementById('userModal').style.display = 'none';
+                // 可选：刷新广场帖子列表以更新关注状态（如果帖子列表中显示关注按钮）
+                // if (typeof fetchSquarePosts === 'function') fetchSquarePosts();
+            }
+        };
+        window.goToChat = function(userId, nickname) {
+            sessionStorage.setItem('chatTargetId', userId);
+            sessionStorage.setItem('chatTargetName', nickname);
+            window.location.href = 'msg.html?tab=chat';
+        };
+        window.closeUserModal = function() { document.getElementById('userModal').style.display = 'none'; };
+        document.getElementById('userModal')?.addEventListener('click', (e) => { if(e.target === document.getElementById('userModal')) closeUserModal(); });
+
+        // 广场核心逻辑
+        let currentType = 'recommend', currentKeyword = '', isSearchActive = false;
+        const leftCategory = document.getElementById('leftCategory'), collapseToggle = document.getElementById('collapseToggle');
+        const categoryItems = document.querySelectorAll('.category-item[data-type]');
+        const postsContainer = document.getElementById('postsContainer');
+        const searchBtn = document.getElementById('searchBtn'), squareSearchInput = document.getElementById('squareSearchInput');
+        const titleArea = document.getElementById('titleArea'), searchContainer = document.getElementById('searchContainer'), searchBox = document.getElementById('searchBox');
+
+        // 评论树渲染
+        function renderCommentTree(comments, postId, level = 0) {
+            if (!comments || comments.length === 0) return '';
+            let html = '';
+            comments.forEach(comment => {
+                const indent = level > 0 ? 'margin-left: 20px;' : '';
+                const posterBadge = comment.isPoster ? '<span class="poster-badge">帖主</span>' : '';
+                const replyToHtml = comment.replyToNickname ? `<span style="font-size:12px; color:#8e8e93;"> 回复 @${escapeHtml(comment.replyToNickname)}</span>` : '';
+                const likeClass = comment.userLiked ? 'action-icon liked' : 'action-icon';
+                const dislikeClass = comment.userDisliked ? 'action-icon disliked' : 'action-icon';
+                const avatarUrl = comment.userAvatar || '';
+                html += `
+                    <div class="comment-item" style="${indent} border-bottom: 1px solid #f0f0f0; padding: 12px 0;" data-comment-id="${comment.id}">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                            <div style="cursor: pointer;" onclick="showUserCard('${comment.studentId}', '${escapeHtml(comment.userNickname || comment.studentId)}', '${avatarUrl}')">
+                                ${avatarUrl ? `<img src="${avatarUrl}" class="comment-avatar">` : `<div class="comment-avatar" style="display:flex; align-items:center; justify-content:center; background:#eef3fc;"><i class="fas fa-user-circle"></i></div>`}
+                            </div>
+                            <span class="comment-nickname" onclick="showUserCard('${comment.studentId}', '${escapeHtml(comment.userNickname || comment.studentId)}', '${avatarUrl}')">${escapeHtml(comment.userNickname || comment.studentId)}</span>
+                            ${posterBadge}
+                            ${replyToHtml}
+                            <span style="font-size: 12px; color: #8e8e93;">${formatRelativeTime(comment.createTime)}</span>
+                        </div>
+                        <div class="comment-content" style="margin-bottom: 8px;">${escapeHtml(comment.content)}</div>
+                        <div class="comment-actions" style="display: flex; gap: 12px; font-size: 13px;">
+                            <span class="${likeClass}" data-comment-id="${comment.id}" data-type="like">
+                                <i class="far fa-thumbs-up"></i> <span class="like-count">${comment.likeCount || 0}</span>
+                            </span>
+                            <span class="${dislikeClass}" data-comment-id="${comment.id}" data-type="dislike">
+                                <i class="far fa-thumbs-down"></i> <span class="dislike-count">${comment.dislikeCount || 0}</span>
+                            </span>
+                            <span class="reply-trigger" data-comment-id="${comment.id}" style="cursor: pointer; color: #0071e3;">
+                                <i class="far fa-comment"></i> 回复
+                            </span>
+                        </div>
+                        <div class="reply-form" id="reply-form-${comment.id}" style="display: none; margin-top: 8px;">
+                            <input type="text" id="reply-input-${comment.id}" placeholder="输入回复..." style="flex:1; padding: 6px; border-radius: 20px; border: 1px solid #ddd;">
+                            <button onclick="submitReply(${comment.id}, ${postId})" style="background:#0071e3; color:white; border:none; border-radius: 20px; padding:6px 12px;">发布</button>
+                        </div>
+                        ${comment.replies && comment.replies.length ? renderCommentTree(comment.replies, postId, level + 1) : ''}
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        function bindReplyButtons(postId) {
+            const container = document.getElementById(`comments-list-${postId}`);
+            if (!container) return;
+            container.querySelectorAll('.reply-trigger').forEach(btn => {
+                btn.removeEventListener('click', handleReplyClick);
+                btn.addEventListener('click', handleReplyClick);
+            });
+        }
+        function handleReplyClick(e) {
+            const commentId = parseInt(e.currentTarget.getAttribute('data-comment-id'));
+            const form = document.getElementById(`reply-form-${commentId}`);
+            if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function loadSquareComments(postId) {
+            const studentId = localStorage.getItem('studentId') || '';
+            const res = await fetch(`${window.API_BASE_URL}/api/post/comments?postId=${postId}&studentId=${studentId}`);
+            const comments = await res.json();
+            const container = document.getElementById(`comments-list-${postId}`);
+            if (!container) return;
+            if (!comments || comments.length === 0) { container.innerHTML = '<div style="padding:8px 0; color:#8e8e93;">暂无评论</div>'; return; }
+            container.innerHTML = renderCommentTree(comments, postId);
+            bindReplyButtons(postId);
+            bindCommentLikeButtons(postId);
+        }
+
+        function bindCommentLikeButtons(postId) {
+            const container = document.getElementById(`comments-list-${postId}`);
+            if (!container) return;
+            container.querySelectorAll('[data-type="like"]').forEach(btn => {
+                btn.removeEventListener('click', handleCommentLike);
+                btn.addEventListener('click', handleCommentLike);
+            });
+            container.querySelectorAll('[data-type="dislike"]').forEach(btn => {
+                btn.removeEventListener('click', handleCommentDislike);
+                btn.addEventListener('click', handleCommentDislike);
+            });
+        }
+
+        async function handleCommentLike(e) {
+            const btn = e.currentTarget;
+            const commentId = parseInt(btn.getAttribute('data-comment-id'));
+            await likeComment(commentId, btn);
+        }
+        async function handleCommentDislike(e) {
+            const btn = e.currentTarget;
+            const commentId = parseInt(btn.getAttribute('data-comment-id'));
+            await dislikeComment(commentId, btn);
+        }
+
+        window.likeComment = async function(commentId, btnElement) {
+            const studentId = localStorage.getItem('studentId');
+            if (!studentId) { showToast('请先登录', 'error'); goTo('login.html'); return; }
+            const formData = new URLSearchParams();
+            formData.append('studentId', studentId);
+            formData.append('commentId', commentId);
+            try {
+                const res = await fetch(window.API_BASE_URL + '/api/post/comment/like', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const likeSpan = btnElement.querySelector('.like-count');
+                    if (likeSpan) likeSpan.innerText = data.likeCount;
+                    btnElement.classList.add('liked');
+                    const parent = btnElement.closest('.comment-actions');
+                    const dislikeBtn = parent.querySelector('[data-type="dislike"]');
+                    if (dislikeBtn && dislikeBtn.classList.contains('disliked')) {
+                        dislikeBtn.classList.remove('disliked');
+                        const dislikeCountSpan = dislikeBtn.querySelector('.dislike-count');
+                        if (dislikeCountSpan) dislikeCountSpan.innerText = data.dislikeCount;
+                    }
+                } else {
+                    showToast(data.message || '操作失败', 'error');
+                }
+            } catch(e) { showToast('网络错误', 'error'); }
+        };
+
+        window.dislikeComment = async function(commentId, btnElement) {
+            const studentId = localStorage.getItem('studentId');
+            if (!studentId) { showToast('请先登录', 'error'); goTo('login.html'); return; }
+            const formData = new URLSearchParams();
+            formData.append('studentId', studentId);
+            formData.append('commentId', commentId);
+            try {
+                const res = await fetch(window.API_BASE_URL + '/api/post/comment/dislike', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const dislikeSpan = btnElement.querySelector('.dislike-count');
+                    if (dislikeSpan) dislikeSpan.innerText = data.dislikeCount;
+                    btnElement.classList.add('disliked');
+                    const parent = btnElement.closest('.comment-actions');
+                    const likeBtn = parent.querySelector('[data-type="like"]');
+                    if (likeBtn && likeBtn.classList.contains('liked')) {
+                        likeBtn.classList.remove('liked');
+                        const likeCountSpan = likeBtn.querySelector('.like-count');
+                        if (likeCountSpan) likeCountSpan.innerText = data.likeCount;
+                    }
+                } else {
+                    showToast(data.message || '操作失败', 'error');
+                }
+            } catch(e) { showToast('网络错误', 'error'); }
+        };
+
+        window.submitReply = async function(parentCommentId, postId) {
+            const studentId = localStorage.getItem('studentId');
+            if (!studentId) { showToast('请先登录', 'error'); goTo('login.html'); return; }
+            const input = document.getElementById(`reply-input-${parentCommentId}`);
+            const content = input.value.trim();
+            if (!content) { showToast('回复内容不能为空', 'error'); return; }
+            const formData = new URLSearchParams();
+            formData.append('studentId', studentId);
+            formData.append('postId', postId);
+            formData.append('content', content);
+            formData.append('parentId', parentCommentId);
+            try {
+                const res = await fetch(window.API_BASE_URL + '/api/post/comment', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('回复成功', 'success');
+                    input.value = '';
+                    loadSquareComments(postId);
+                    fetchSquarePosts();
+                    if (data.repliedUserId && data.repliedUserId !== studentId) {
+                        addNotification(data.repliedUserId, 'reply', studentId, postId, content);
+                    }
+                } else {
+                    showToast(data.message || '回复失败', 'error');
+                }
+            } catch(e) { showToast('网络错误', 'error'); }
+        };
+
+        window.submitSquareComment = async function(postId) {
+            const studentId = localStorage.getItem('studentId');
+            if (!studentId) { showToast('请先登录', 'error'); goTo('login.html'); return; }
+            const input = document.getElementById(`comment-input-${postId}`);
+            const content = input.value.trim();
+            if (!content) { showToast('评论内容不能为空', 'error'); return; }
+            const postCard = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+            const authorId = postCard?.getAttribute('data-author-id');
+            const formData = new URLSearchParams();
+            formData.append('studentId', studentId);
+            formData.append('postId', postId);
+            formData.append('content', content);
+            try {
+                const res = await fetch(window.API_BASE_URL + '/api/post/comment', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('评论成功', 'success');
+                    input.value = '';
+                    loadSquareComments(postId);
+                    fetchSquarePosts();
+                    if (authorId && authorId !== studentId) {
+                        addNotification(authorId, 'comment', studentId, postId, content);
+                    }
+                } else {
+                    showToast(data.message || '评论失败', 'error');
+                }
+            } catch(e) { showToast('网络错误', 'error'); }
+        };
+
+        // 获取广场帖子
+        async function fetchSquarePosts() {
+            let url = `/api/post/square/posts?sort=${currentType}&keyword=${encodeURIComponent(currentKeyword)}&studentId=${localStorage.getItem('studentId') || ''}`;
+            if (!['recommend','latest','hot'].includes(currentType)) url += `&category=${encodeURIComponent(currentType)}`;
+            try {
+                const res = await fetch(API_BASE_URL + url);
+                const posts = await res.json();
+                renderPosts(posts);
+            } catch(e) { postsContainer.innerHTML = '<div class="empty-state">加载失败</div>'; }
+        }
+
+        // 渲染帖子列表
+        function renderPosts(posts) {
+            if (!posts?.length) { postsContainer.innerHTML = '<div class="empty-state">暂无内容</div>'; return; }
+            postsContainer.innerHTML = posts.map(post => {
+                const likeClass = post.userLiked ? 'action-icon liked' : 'action-icon';
+                const dislikeClass = post.userDisliked ? 'action-icon disliked' : 'action-icon';
+                const avatarHtml = post.avatar ? `<img src="${post.avatar.startsWith('http') ? post.avatar : API_BASE_URL + post.avatar}" style="width:100%;height:100%;object-fit:cover">` : '<i class="fas fa-user-circle"></i>';
+
+                const contentText = escapeHtml(post.content);
+                const contentId = `content-${post.id}`;
+                const needToggle = post.content.length > 100;
+                const toggleBtnHtml = needToggle ? `<div class="toggle-content-btn" data-id="${post.id}" onclick="event.stopPropagation(); toggleContent(${post.id})">展开全文</div>` : '';
+
+                let imagesHtml = '';
+                if (post.imageList && post.imageList.length) {
+                    const displayImages = post.imageList.slice(0, 3);
+                    const remaining = post.imageList.length - 3;
+                    imagesHtml = `<div class="post-images">`;
+                    displayImages.forEach(url => {
+                        const fullUrl = url.startsWith('http') ? url : API_BASE_URL + url;
+                        imagesHtml += `<div class="post-image-item"><img src="${fullUrl}" loading="lazy"></div>`;
+                    });
+                    if (remaining > 0) {
+                        imagesHtml += `<div class="post-image-item image-count-badge">+${remaining}</div>`;
+                    }
+                    imagesHtml += `</div>`;
+                }
+
+                return `<div class="post-card" data-post-id="${post.id}" data-author-id="${post.studentId}" onclick="goToPostDetail(${post.id})">
+                    <div class="post-header">
+                        <div class="post-avatar" onclick="event.stopPropagation(); showUserCard('${post.studentId}', '${escapeHtml(post.nickname || post.studentId)}', '${post.avatar || ''}')">${avatarHtml}</div>
+                        <div class="post-info">
+                            <div class="post-name" onclick="event.stopPropagation(); showUserCard('${post.studentId}', '${escapeHtml(post.nickname || post.studentId)}', '${post.avatar || ''}')">${escapeHtml(post.nickname || post.studentId)}</div>
+                            <div class="post-tag">#${escapeHtml(post.type)}</div>
+                        </div>
+                    </div>
+                    <div class="post-content-text" id="${contentId}">${contentText}</div>
+                    ${toggleBtnHtml}
+                    ${imagesHtml}
+                    <div class="post-footer">
+                        <span>${formatRelativeTime(post.createTime)}</span>
+                        <div class="post-actions">
+                            <span class="${likeClass}" onclick="event.stopPropagation(); likeSquarePost(${post.id}, this)">
+                                <i class="far fa-thumbs-up"></i> <span class="like-count">${post.likeCount||0}</span>
+                            </span>
+                            <span class="${dislikeClass}" onclick="event.stopPropagation(); dislikeSquarePost(${post.id}, this)">
+                                <i class="far fa-thumbs-down"></i> <span class="dislike-count">${post.dislikeCount||0}</span>
+                            </span>
+                            <span class="action-icon" onclick="event.stopPropagation(); goToPostDetail(${post.id})">
+                                <i class="far fa-comment"></i> <span class="comment-count">${post.commentCount||0}</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        window.toggleContent = function(postId) {
+            const contentDiv = document.getElementById(`content-${postId}`);
+            if (!contentDiv) return;
+            const isExpanded = contentDiv.classList.contains('expanded');
+            const btn = contentDiv.nextElementSibling;
+            if (isExpanded) {
+                contentDiv.classList.remove('expanded');
+                btn.innerText = '展开全文';
+            } else {
+                contentDiv.classList.add('expanded');
+                btn.innerText = '收起';
+            }
+        };
+
+        window.goToPostDetail = function(postId) {
+            window.location.href = `post-detail.html?postId=${postId}`;
+        };
+
+        window.likeSquarePost = async function(postId, btn) {
+            const studentId = localStorage.getItem('studentId');
+            if (!studentId) { showToast('请先登录', 'error'); goTo('login.html'); return; }
+            const formData = new URLSearchParams();
+            formData.append('studentId', studentId);
+            formData.append('postId', postId);
+            try {
+                const res = await fetch(window.API_BASE_URL + '/api/post/like', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const likeSpan = btn.querySelector('.like-count');
+                    if (likeSpan) likeSpan.innerText = data.likeCount;
+                    if (data.liked) {
+                        btn.classList.add('liked');
+                        const parent = btn.closest('.post-actions');
+                        const dislikeBtn = parent.querySelector('[onclick*="dislikeSquarePost"]');
+                        if (dislikeBtn && dislikeBtn.classList.contains('disliked')) {
+                            dislikeBtn.classList.remove('disliked');
+                            const dislikeSpan = dislikeBtn.querySelector('.dislike-count');
+                            if (dislikeSpan) dislikeSpan.innerText = data.dislikeCount;
+                        }
+                    } else {
+                        btn.classList.remove('liked');
+                    }
+                } else {
+                    showToast(data.message || '操作失败', 'error');
+                }
+            } catch(e) { showToast('网络错误', 'error'); }
+        };
+
+        window.dislikeSquarePost = async function(postId, btn) {
+            const studentId = localStorage.getItem('studentId');
+            if (!studentId) { showToast('请先登录', 'error'); goTo('login.html'); return; }
+            const formData = new URLSearchParams();
+            formData.append('studentId', studentId);
+            formData.append('postId', postId);
+            try {
+                const res = await fetch(window.API_BASE_URL + '/api/post/dislike', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const dislikeSpan = btn.querySelector('.dislike-count');
+                    if (dislikeSpan) dislikeSpan.innerText = data.dislikeCount;
+                    if (data.disliked) {
+                        btn.classList.add('disliked');
+                        const parent = btn.closest('.post-actions');
+                        const likeBtn = parent.querySelector('[onclick*="likeSquarePost"]');
+                        if (likeBtn && likeBtn.classList.contains('liked')) {
+                            likeBtn.classList.remove('liked');
+                            const likeSpan = likeBtn.querySelector('.like-count');
+                            if (likeSpan) likeSpan.innerText = data.likeCount;
+                        }
+                    } else {
+                        btn.classList.remove('disliked');
+                    }
+                } else {
+                    showToast(data.message || '操作失败', 'error');
+                }
+            } catch(e) { showToast('网络错误', 'error'); }
+        };
+
+        window.toggleSquareComments = function(postId) {
+            const section = document.getElementById(`comment-section-${postId}`);
+            if (section) {
+                if (section.style.display === 'none') {
+                    section.style.display = 'block';
+                    loadSquareComments(postId);
+                } else section.style.display = 'none';
+            }
+        };
+
+        function switchCategory(type) {
+            currentType = type;
+            categoryItems.forEach(item => {
+                const itemType = item.getAttribute('data-type');
+                if (itemType === type) {
+                    item.classList.add('active');
+                    item.style.fontSize = '16px';
+                } else {
+                    item.classList.remove('active');
+                    item.style.fontSize = '';
+                }
+            });
+            const recommendItem = document.querySelector('.category-item.recommend');
+            if (type === 'recommend') {
+                recommendItem.classList.add('active');
+            } else {
+                recommendItem.classList.remove('active');
+            }
+            fetchSquarePosts();
+        }
+
+        function toggleCollapse() {
+            leftCategory.classList.toggle('collapsed');
+            const icon = collapseToggle.querySelector('i');
+            icon.classList.toggle('fa-chevron-up');
+            icon.classList.toggle('fa-chevron-right');
+        }
+
+        function openSearch() { isSearchActive=true; searchContainer.style.display='block'; requestAnimationFrame(()=>{searchBox.classList.add('active'); titleArea.style.opacity='0'; titleArea.style.transform='translateX(-20px)';}); setTimeout(()=>squareSearchInput.focus(),50); }
+        function closeSearch() { isSearchActive=false; searchBox.classList.remove('active'); titleArea.style.opacity=''; titleArea.style.transform=''; setTimeout(()=>{if(!isSearchActive) searchContainer.style.display='none';},280); }
+        squareSearchInput.addEventListener('input', (e)=>{ currentKeyword=e.target.value.trim(); fetchSquarePosts(); });
+        searchBtn.addEventListener('click', (e)=>{ e.stopPropagation(); isSearchActive?closeSearch():openSearch(); });
+        document.addEventListener('click', (e)=>{ if(isSearchActive && searchContainer && !searchContainer.contains(e.target) && e.target!==searchBtn) closeSearch(); });
+        collapseToggle.addEventListener('click', toggleCollapse);
+        categoryItems.forEach(item=>{ item.addEventListener('click',()=>{ const type=item.getAttribute('data-type'); if(type) switchCategory(type); }); });
+
+        async function publishPost() {
+            const studentId = localStorage.getItem('studentId');
+            if (!studentId) { showToast('请先登录', 'error'); goTo('login.html'); return; }
+            const type = document.getElementById('publishType').value;
+            const title = document.getElementById('publishTitle').value.trim();
+            const content = document.getElementById('publishContent').value.trim();
+            if (!title || !content) { showToast('标题和内容不能为空', 'error'); return; }
+            const formData = new URLSearchParams();
+            formData.append('studentId', studentId); formData.append('type', type); formData.append('title', title); formData.append('content', content);
+            try {
+                const res = await fetch(window.API_BASE_URL + '/api/post/publish', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('发布成功', 'success');
+                    publishModal.style.display = 'none';
+                    document.getElementById('publishTitle').value = '';
+                    document.getElementById('publishContent').value = '';
+                    fetchSquarePosts();
+                } else showToast(data.message || '发布失败', 'error');
+            } catch(e) { showToast('网络错误', 'error'); }
+        }
+
+        function bindEvents() {
+            document.getElementById('publishBtn')?.addEventListener('click', () => publishModal.style.display = 'flex');
+            document.getElementById('closePublishModal')?.addEventListener('click', () => publishModal.style.display = 'none');
+            document.querySelector('.square-publish-cancel')?.addEventListener('click', () => publishModal.style.display = 'none');
+            document.querySelector('.square-publish-submit')?.addEventListener('click', publishPost);
+            document.querySelector('.square-publish-overlay')?.addEventListener('click', () => publishModal.style.display = 'none');
+        }
+
+        // 底部导航栏绑定
+        function bindNav() {
+            const navMap = {
+                home: 'index.html',
+                explore: 'help.html',
+                publish: 'publish.html',
+                msg: 'msg.html',
+                mine: 'mine.html'
+            };
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.removeEventListener('click', nav._clickHandler);
+                const handler = (e) => {
+                    e.stopPropagation();
+                    const action = nav.getAttribute('data-nav');
+                    if (action && navMap[action]) {
+                        window.location.href = navMap[action];
+                    }
+                };
+                nav.addEventListener('click', handler);
+                nav._clickHandler = handler;
+            });
+            // 高亮当前页面（广场）
+            const currentNav = document.querySelector('.nav-item[data-nav="explore"]');
+            if (currentNav) currentNav.classList.add('active');
+        }
+
+        function init() {
+            initStorage();
+            bindEvents();
+            switchCategory('recommend');
+            leftCategory.classList.add('collapsed');           // 改为添加 collapsed 类
+            // 同步折叠按钮图标（从向上箭头改为向右箭头）
+            const toggleIcon = collapseToggle.querySelector('i');
+            if (toggleIcon) {
+                toggleIcon.classList.remove('fa-chevron-up');
+                toggleIcon.classList.add('fa-chevron-right');
+            }
+            searchContainer.style.display = 'none';
+            searchBox.classList.remove('active');
+            isSearchActive = false;
+            titleArea.style.opacity = '';
+            titleArea.style.transform = '';
+            if (typeof updateMsgBadge === 'function') updateMsgBadge();
+            bindNav();  // 绑定底部导航
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+        else init();
+    })();
+</script>
+</body>
+</html>

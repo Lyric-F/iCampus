@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>我的帖子 - iCampus</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #fafcff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+        .app-container {
+            max-width: 540px;
+            width: 100%;
+            margin: 0 auto;
+            background: inherit;
+            position: relative;
+        }
+        .top-bar {
+            background: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #eef2f6;
+        }
+        body.dark .top-bar {
+            background: #13182a;
+            border-color: #2c2e3a;
+        }
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f7;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .top-title {
+            flex: 1;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .delete-all-btn {
+            color: #ff3b30;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(255,59,48,0.1);
+        }
+        .delete-all-btn:active {
+            background: rgba(255,59,48,0.2);
+        }
+        .post-list {
+            padding: 12px 16px;
+        }
+        .post-card {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #eef2f6;
+            position: relative;
+        }
+        body.dark .post-card {
+            background: #13182a;
+            border-color: #2c2e3a;
+        }
+        .post-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            padding-right: 40px;
+            cursor: pointer;
+        }
+        .post-content {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        body.dark .post-content {
+            color: #b3c0e5;
+        }
+        .post-meta {
+            font-size: 12px;
+            color: #8e8e93;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .delete-post-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: #ff3b30;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .delete-post-btn:active {
+            background: rgba(255,59,48,0.1);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+        .tabbar {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-bar">
+        <div class="back-btn" onclick="goTo('mine.html')"><i class="fas fa-arrow-left"></i></div>
+        <div class="top-title">我的帖子</div>
+        <div class="delete-all-btn" id="deleteAllBtn">一键删除</div>
+    </div>
+    <div id="myPostsList" class="post-list"></div>
+</div>
+<script src="js/common.js"></script>
+<script>
+    async function loadMyPosts() {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) {
+            document.getElementById('myPostsList').innerHTML = '<div class="empty-state">请先登录</div>';
+            return;
+        }
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/user/posts?studentId=${studentId}`);
+            const posts = await res.json();
+            const container = document.getElementById('myPostsList');
+            if (!posts || posts.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无帖子</div>';
+                return;
+            }
+            container.innerHTML = posts.map(post => `
+                <div class="post-card" data-post-id="${post.id}">
+                    <div class="post-title" onclick="goToPostDetail(${post.id})">${escapeHtml(post.title)}</div>
+                    <div class="post-content" onclick="goToPostDetail(${post.id})">${escapeHtml(post.content.substring(0, 80))}${post.content.length > 80 ? '...' : ''}</div>
+                    <div class="post-meta">
+                        <span>${post.type}</span>
+                        <span>❤️ ${post.likeCount || 0}</span>
+                        <span>💬 ${post.commentCount || 0}</span>
+                        <span>${formatRelativeTime(post.createTime)}</span>
+                    </div>
+                    <button class="delete-post-btn" onclick="deleteSinglePost(${post.id}, event)" title="删除帖子">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            `).join('');
+        } catch(e) {
+            document.getElementById('myPostsList').innerHTML = '<div class="empty-state">加载失败</div>';
+        }
+    }
+
+    // 单条删除
+    window.deleteSinglePost = async function(postId, event) {
+        event.stopPropagation(); // 防止触发卡片点击跳转
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) {
+            showToast('请先登录', 'error');
+            return;
+        }
+        if (!confirm('确定要删除这条帖子吗？删除后无法恢复。')) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/post/delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `studentId=${studentId}&postId=${postId}`
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('删除成功', 'success');
+                loadMyPosts(); // 刷新列表
+                // 可选：同时刷新首页和广场的帖子（如果页面可见）
+                if (window.location.pathname === '/index.html' && typeof loadPosts === 'function') loadPosts();
+                if (window.location.pathname === '/help.html' && typeof loadSquarePosts === 'function') loadSquarePosts();
+            } else {
+                showToast(data.message || '删除失败', 'error');
+            }
+        } catch(e) {
+            showToast('网络错误', 'error');
+        }
+    };
+
+    // 一键删除所有帖子
+    async function deleteAllMyPosts() {
+        const studentId = localStorage.getItem('studentId');
+        if (!studentId) {
+            showToast('请先登录', 'error');
+            return;
+        }
+        // 获取当前用户的所有帖子
+        const res = await fetch(`${API_BASE_URL}/api/user/posts?studentId=${studentId}`);
+        const posts = await res.json();
+        if (!posts || posts.length === 0) {
+            showToast('没有帖子可删除', 'info');
+            return;
+        }
+        if (!confirm(`⚠️ 确定要删除全部 ${posts.length} 条帖子吗？\n此操作不可恢复！`)) return;
+
+        let successCount = 0;
+        for (const post of posts) {
+            try {
+                const delRes = await fetch(`${API_BASE_URL}/api/post/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `studentId=${studentId}&postId=${post.id}`
+                });
+                const data = await delRes.json();
+                if (data.success) successCount++;
+            } catch (e) {
+                console.error('删除失败', e);
+            }
+        }
+        showToast(`成功删除 ${successCount} 条帖子`, 'success');
+        loadMyPosts();
+        // 可选：刷新其他页面
+        if (window.location.pathname === '/index.html' && typeof loadPosts === 'function') loadPosts();
+        if (window.location.pathname === '/help.html' && typeof loadSquarePosts === 'function') loadSquarePosts();
+    }
+
+    // 绑定一键删除按钮事件
+    document.getElementById('deleteAllBtn').addEventListener('click', deleteAllMyPosts);
+
+    function goToPostDetail(postId) {
+        window.location.href = `post-detail.html?postId=${postId}`;
+    }
+
+    window.addEventListener('load', loadMyPosts);
+</script>
+</body>
+</html>
