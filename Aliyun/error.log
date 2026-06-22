@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "generate_embeddings.py", line 51, in <module>
+    generate_post_embeddings()
+  File "generate_embeddings.py", line 34, in generate_post_embeddings
+    df = pd.read_csv(cfg.POSTS_CSV)
+  File "/opt/app/iCampus_rec/venv/lib64/python3.8/site-packages/pandas/io/parsers/readers.py", line 912, in read_csv
+    return _read(filepath_or_buffer, kwds)
+  File "/opt/app/iCampus_rec/venv/lib64/python3.8/site-packages/pandas/io/parsers/readers.py", line 583, in _read
+    return parser.read(nrows)
+  File "/opt/app/iCampus_rec/venv/lib64/python3.8/site-packages/pandas/io/parsers/readers.py", line 1704, in read
+    ) = self._engine.read(  # type: ignore[attr-defined]
+  File "/opt/app/iCampus_rec/venv/lib64/python3.8/site-packages/pandas/io/parsers/c_parser_wrapper.py", line 234, in read
+    chunks = self._reader.read_low_memory(nrows)
+  File "pandas/_libs/parsers.pyx", line 814, in pandas._libs.parsers.TextReader.read_low_memory
+  File "pandas/_libs/parsers.pyx", line 875, in pandas._libs.parsers.TextReader._read_rows
+  File "pandas/_libs/parsers.pyx", line 850, in pandas._libs.parsers.TextReader._tokenize_rows
+  File "pandas/_libs/parsers.pyx", line 861, in pandas._libs.parsers.TextReader._check_tokenize_status
+  File "pandas/_libs/parsers.pyx", line 2029, in pandas._libs.parsers.raise_parser_error
+pandas.errors.ParserError: Error tokenizing data. C error: Expected 5 fields in line 91, saw 6
+
