@@ -1,0 +1,88 @@
++-----------------------------------------------AutoDL-----------------------------------------------------+
+目录说明:
+╔═════════════════╦════════╦════╦═════════════════════════════════════════════════════════════════════════╗
+║目录             ║名称    ║速度║说明                                                                     ║
+╠═════════════════╬════════╬════╬═════════════════════════════════════════════════════════════════════════╣
+║/                ║系 统 盘║一般║实例关机数据不会丢失，可存放代码等。会随保存镜像一起保存。               ║
+║/root/autodl-tmp ║数 据 盘║ 快 ║实例关机数据不会丢失，可存放读写IO要求高的数据。但不会随保存镜像一起保存 ║
+╚═════════════════╩════════╩════╩═════════════════════════════════════════════════════════════════════════╝
+CPU ：22 核心
+内存：110 GB
+GPU ：NVIDIA RTX PRO 6000 Blackwell Server Edition, 1
+存储：
+  系 统 盘/               ：28% 8.2G/30G
+  数 据 盘/root/autodl-tmp：1% 12K/50G
++----------------------------------------------------------------------------------------------------------+
+*注意: 
+1.系统盘较小请将大的数据存放于数据盘或文件存储中，重置系统时数据盘和文件存储中的数据不受影响
+2.清理系统盘请参考：https://www.autodl.com/docs/qa1/
+3.终端中长期执行命令请使用screen等工具开后台运行，确保程序不受SSH连接中断影响：https://www.autodl.com/docs/daemon/
+root@autodl-container-saw1l6b25s-369f433b:~# python train.py
+帖子特征维度: 160
+图构建完成
+预训练倾向性模型...
+Propensity epoch 0, loss=0.7514
+Propensity epoch 10, loss=0.6456
+Propensity epoch 20, loss=0.5688
+/root/train.py:169: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = torch.cuda.amp.GradScaler(enabled=(cfg.DEVICE.type == 'cuda'))
+/root/train.py:216: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=(cfg.DEVICE.type == 'cuda')):
+验证集正样本数: 44442.0
+/root/miniconda3/lib/python3.12/site-packages/torch/nn/modules/transformer.py:515: UserWarning: The PyTorch API of nested tensors is in prototype stage and will change in the near future. We recommend specifying layout=torch.jagged when constructing a nested tensor, as this layout receives active development, has better operator coverage, and works with torch.compile. (Triggered internally at /pytorch/aten/src/ATen/NestedTensorImpl.cpp:178.)
+  output = torch._nested_tensor_from_mask(
+Epoch 0, loss=1.8100, val AUC=0.5011
+  -> Best model saved (AUC=0.5011)
+/root/train.py:216: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=(cfg.DEVICE.type == 'cuda')):
+验证集正样本数: 44442.0
+Epoch 10, loss=1.7814, val AUC=0.5051
+  -> Best model saved (AUC=0.5051)
+/root/train.py:216: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=(cfg.DEVICE.type == 'cuda')):
+验证集正样本数: 44442.0
+Epoch 20, loss=1.6552, val AUC=0.6227
+  -> Best model saved (AUC=0.6227)
+/root/train.py:216: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=(cfg.DEVICE.type == 'cuda')):
+验证集正样本数: 44442.0
+Epoch 30, loss=1.5339, val AUC=0.6729
+  -> Best model saved (AUC=0.6729)
+/root/train.py:216: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=(cfg.DEVICE.type == 'cuda')):
+验证集正样本数: 44442.0
+Epoch 40, loss=1.5083, val AUC=0.6894
+  -> Best model saved (AUC=0.6894)
+/root/train.py:216: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=(cfg.DEVICE.type == 'cuda')):
+验证集正样本数: 44442.0
+Epoch 50, loss=1.4098, val AUC=0.7696
+  -> Best model saved (AUC=0.7696)
+  -> Learning rate decreased to 0.000250
+/root/train.py:216: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=(cfg.DEVICE.type == 'cuda')):
+验证集正样本数: 44442.0
+Epoch 60, loss=1.3263, val AUC=0.7967
+  -> Best model saved (AUC=0.7967)
+/root/train.py:216: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=(cfg.DEVICE.type == 'cuda')):
+验证集正样本数: 44442.0
+Epoch 70, loss=1.2896, val AUC=0.8077
+  -> Best model saved (AUC=0.8077)
+/root/train.py:216: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=(cfg.DEVICE.type == 'cuda')):
+验证集正样本数: 44442.0
+Epoch 80, loss=1.2632, val AUC=0.8183
+  -> Best model saved (AUC=0.8183)
+/root/train.py:216: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=(cfg.DEVICE.type == 'cuda')):
+验证集正样本数: 44442.0
+Epoch 90, loss=1.2343, val AUC=0.8285
+  -> Best model saved (AUC=0.8285)
+/root/train.py:216: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=(cfg.DEVICE.type == 'cuda')):
+训练完成。
+root@autodl-container-saw1l6b25s-369f433b:~# python -c "import torch; state = torch.load('models/best_model.pth'); print('Number of keys:', len(state.keys())); print('Sample keys:', list(state.keys())[:5])"
+Number of keys: 134
+Sample keys: ['user_embedding.weight', 'seq_encoder.item_emb.weight', 'seq_encoder.pos_emb.weight', 'seq_encoder.transformer.layers.0.self_attn.in_proj_weight', 'seq_encoder.transformer.layers.0.self_attn.in_proj_bias']
+root@autodl-container-saw1l6b25s-369f433b:~# 
